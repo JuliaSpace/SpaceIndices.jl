@@ -62,7 +62,7 @@ function parse_files(::Type{Celestrak}, filepaths::Vector{String})
     # Store the latest processed day.
     jd_k_1 = datetime2julian(DateTime(0, 1, 1))
 
-    file = readdlm(filepath, ','; skipstart=1)
+    file = readdlm(filepath, ','; skipstart=1)::Matrix{Any}
 
     for i in 1:size(file)[1]
 

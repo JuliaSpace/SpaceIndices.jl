@@ -8,15 +8,21 @@
 end
 
 @testset "JET Testing" begin
-    rep = JET.test_package(SpaceIndices; toplevel_logger=nothing, target_modules=(@__MODULE__,))
+    rep = JET.test_package(SpaceIndices; toplevel_logger=nothing, target_modules=(SpaceIndices,))
 end
 
-@testset "Allocations Check" begin
-    SpaceIndices.init()
+# Skip allocation tests on macOS with Julia 1.12+ due to AllocCheck detecting
+# platform-specific runtime calls (jl_get_pgcstack_static) as allocations
+if Sys.isapple() && (VERSION.major == 1 && VERSION.minor >= 12)
+    @warn "Allocation tests skipped on macOS with Julia 1.12+ due to AllocCheck platform limitations"
+else
+    @testset "Allocations Check" begin
+        SpaceIndices.init()
 
-    for index in _INDICES
-        @test length(check_allocs(space_index, (Val{index}, Float64))) == 0
+        for index in _INDICES
+            @test length(check_allocs(space_index, (Val{index}, Float64))) == 0
+        end
+
+        SpaceIndices.destroy()
     end
-
-    SpaceIndices.destroy()
 end

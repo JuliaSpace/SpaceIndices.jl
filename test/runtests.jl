@@ -43,7 +43,7 @@ if isempty(VERSION.prerelease)
     using Pkg
 
     Pkg.add("DifferentiationInterface")
-    Pkg.add("Enzyme")
+    
     Pkg.add("FiniteDiff")
     Pkg.add("ForwardDiff")
     Pkg.add("Mooncake")
@@ -54,15 +54,28 @@ if isempty(VERSION.prerelease)
     Pkg.add("JET")
     Pkg.add("AllocCheck")
 
-    # Test with Mooncake and Enzyme along with the other backends
-    using DifferentiationInterface
-    using Enzyme, FiniteDiff, ForwardDiff, Mooncake, PolyesterForwardDiff, Zygote
-    const _BACKENDS = (
-        ("ForwardDiff", AutoForwardDiff()),
-        ("Enzyme", AutoEnzyme()),
-        ("Mooncake", AutoMooncake(;config=nothing)),
-        ("PolyesterForwardDiff", AutoPolyesterForwardDiff()),
-    )
+    
+    if (VERSION.major == 1 && VERSION.minor < 12)
+        Pkg.add("Enzyme")
+        using DifferentiationInterface
+        using Enzyme, FiniteDiff, ForwardDiff, Mooncake, PolyesterForwardDiff, Zygote
+
+        const _BACKENDS = (
+            ("ForwardDiff", AutoForwardDiff()),
+            ("Enzyme", AutoEnzyme()),
+            ("Mooncake", AutoMooncake(;config=nothing)),
+            ("PolyesterForwardDiff", AutoPolyesterForwardDiff()),
+        )
+    else
+        @warn "Enzyme is not fully supported on Julia 1.12, skipping tests"
+        using DifferentiationInterface
+        using FiniteDiff, ForwardDiff, Mooncake, PolyesterForwardDiff, Zygote
+        const _BACKENDS = (
+            ("ForwardDiff", AutoForwardDiff()),
+            ("Mooncake", AutoMooncake(;config=nothing)),
+            ("PolyesterForwardDiff", AutoPolyesterForwardDiff()),
+        )
+    end
 
     @testset "Automatic Differentiation" verbose = true begin
         include("./differentiability.jl")

@@ -292,10 +292,10 @@ end
 
 function _parse_hpo_forecast_json(filepath::String, n_per_day::Int)
     # Read and parse the JSON file
-    json_data = JSON.parsefile(filepath)
+    json_data = JSON.parsefile(filepath)::Dict{String, Any}
 
     # Use MEDIAN forecast values
-    median_data = json_data["MEDIAN"]
+    median_data = json_data["MEDIAN"]::Dict{String, Any}
 
     # Dictionary to accumulate data by date
     daily_data = Dict{Tuple{Int, Int, Int}, Dict{Int, Float64}}()
