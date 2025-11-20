@@ -1,6 +1,11 @@
 SpaceIndices.jl Changelog
 =========================
 
+Version 2.0.1
+-------------
+
+- ![Bugfix][badge-bugfix] The tests are now passing in Julia 1.12. (PR [#9][gh-pr-9])
+
 Version 2.0.0
 -------------
 
@@ -93,3 +98,4 @@ Version 0.1.0
 [gh-pr-2]: https://github.com/JuliaSpace/SpaceIndices.jl/pull/2
 [gh-pr-3]: https://github.com/JuliaSpace/SpaceIndices.jl/pull/3
 [gh-pr-7]: https://github.com/JuliaSpace/SpaceIndices.jl/pull/7
+[gh-pr-9]: https://github.com/JuliaSpace/SpaceIndices.jl/pull/9
