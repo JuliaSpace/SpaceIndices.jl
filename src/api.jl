@@ -110,6 +110,10 @@ function space_index(index::Val, date::DateTime)
     return space_index(index, datetime2julian(date))
 end
 
+function space_index(index::Symbol, date::DateTime)
+    return space_index(Val(index), datetime2julian(date))
+end
+
 """
     parse_files(::Type{T}, filepaths::Vector{String}) where T<:SpaceIndexSet -> T
 
