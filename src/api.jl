@@ -103,6 +103,12 @@ urls
 Get the space `index` for the Julian day `jd` or the `instant`. The latter must be an object
 of type `DateTime`. `kwargs...` can be used to pass additional configuration for the space
 index.
+
+    space_index(::Val{:index}, t0::DateTime, t1::DateTime) -> SpaceIndexSeries
+    space_index(:index, t0::DateTime, t1::DateTime) -> SpaceIndexSeries
+
+Get the space `index` for a date range from `t0` to `t1`. Returns a [`SpaceIndexSeries`](@ref)
+containing the dates and corresponding index values. The step size is one day.
 """
 space_index
 
@@ -110,8 +116,28 @@ function space_index(index::Val, date::DateTime)
     return space_index(index, datetime2julian(date))
 end
 
-function space_index(index::Symbol, date::DateTime)
-    return space_index(Val(index), datetime2julian(date))
+function space_index(index::Symbol, args...)
+    return space_index(Val(index), args...)
+end
+
+function space_index(index::Val, t0::DateTime, t1::DateTime)
+    sample = space_index(index, t0)
+    return _collect_space_index(index, t0, t1, sample)
+end
+
+# Scalar values: one value per day
+function _collect_space_index(index::Val, t0::DateTime, t1::DateTime, ::Number)
+    dates = t0:Day(1):t1
+    values = [space_index(index, t) for t in dates]
+    return SpaceIndexSeries(dates, values)
+end
+
+# Tuple values (e.g., Kp/Ap with N values per day): flatten into single vector
+function _collect_space_index(index::Val, t0::DateTime, t1::DateTime, ::NTuple{N}) where N
+    step = Hour(24 ÷ N)
+    dates = t0:step:(t1 + (N - 1) * step)
+    values = [v for t in t0:Day(1):t1 for v in space_index(index, t)]
+    return SpaceIndexSeries(dates, values)
 end
 
 """

@@ -413,3 +413,26 @@ end
 
     SpaceIndices.destroy()
 end
+
+
+@testset "SpaceIndexSeries" begin
+    SpaceIndices.init(SpaceIndices.Celestrak)
+
+    t0 = DateTime(2020, 6, 19)
+    t1 = DateTime(2020, 6, 22)
+
+    # Test scalar index (F10obs)
+    series = space_index(:F10obs, t0, t1)
+    @test series isa AbstractArray
+    @test length(series) == 4
+    @test series.dates == t0:Day(1):t1
+    @test series[1] == space_index(:F10obs, t0)
+    @test series[end] == space_index(:F10obs, t1)
+
+    # Test tuple index (Kp) - should be flattened
+    series = space_index(:Kp, t0, t1)
+    @test series isa SpaceIndexSeries{Float64}
+    @test length(series) == 32  # 4 days × 8 values per day
+    @test step(series.dates) == Hour(3)
+    @test series[1:8] == collect(space_index(:Kp, t0))
+end
