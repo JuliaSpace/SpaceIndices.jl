@@ -60,8 +60,9 @@ julia> SpaceIndices.init(SpaceIndices.Celestrak; filepaths = ["./SW-All.csv"])
 ## Dst Index Set
 
 The `Dst` index set is **not** included in the default `SpaceIndices.init()` call because it
-downloads many monthly HTML files from the Kyoto WDC and depends on an ap data source
-(`Celestrak` or `Hpo`) being initialized first. It must be initialized separately:
+downloads many monthly HTML files from the Kyoto WDC (final, provisional, and real-time
+quicklook data) and depends on an ap data source (`Celestrak` or `Hpo`) being initialized
+first. It must be initialized separately:
 
 ```julia-repl
 julia> SpaceIndices.init()                           # Initialize all default sets first

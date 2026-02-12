@@ -12,6 +12,7 @@
 # Data categories:
 #   - Final:       1957/01 - 2020/12 (definitive, quality-checked)
 #   - Provisional: 2021/01 - present (visually screened for artificial noise)
+#   - Real-time:   Where provisional ends - present (unverified quicklook, for monitoring)
 #
 # The data is downloaded as monthly HTML pages from the Kyoto WDC. Each page contains
 # 24 hourly Dst values for every day in the month.
@@ -87,6 +88,17 @@ function urls(::Type{Dst})
         end
     end
 
+    # Real-time (quicklook) DST: duplicates the provisional range.
+    # During _fetch_dst_files(), real-time is only tried for months where provisional is
+    # unavailable. Listed here for API completeness.
+    for year in _DST_PROV_START_YEAR:cy
+        end_m = (year == cy) ? cm : 12
+        for month in 1:end_m
+            ym = _dst_ym_str(year, month)
+            push!(_urls, "https://wdc.kugi.kyoto-u.ac.jp/dst_realtime/$(ym)/index.html")
+        end
+    end
+
     return _urls
 end
 
@@ -110,6 +122,13 @@ function filenames(::Type{Dst})
         end
     end
 
+    for year in _DST_PROV_START_YEAR:cy
+        end_m = (year == cy) ? cm : 12
+        for month in 1:end_m
+            push!(_fns, "dst_realtime_$(year)_$(lpad(month, 2, '0')).html")
+        end
+    end
+
     return _fns
 end
 
@@ -127,6 +146,14 @@ function expiry_periods(::Type{Dst})
     cy = Dates.year(current_dt)
     cm = Dates.month(current_dt)
 
+    for year in _DST_PROV_START_YEAR:cy
+        end_m = (year == cy) ? cm : 12
+        for _ in 1:end_m
+            push!(_exp, Day(1))
+        end
+    end
+
+    # Real-time: refresh daily.
     for year in _DST_PROV_START_YEAR:cy
         end_m = (year == cy) ? cm : 12
         for _ in 1:end_m
@@ -234,8 +261,9 @@ end
 #
 # Final files (1957/01–2020/12) are known to exist and always downloaded. Provisional files
 # (2021/01 onward) are fetched sequentially, stopping at the first month that returns a 404.
-# Kyoto publishes provisional data with a multi-month lag, so hitting a missing month is the
-# normal stopping condition — not an error.
+# Real-time (quicklook) files are then fetched for any remaining months up to the current
+# month. This ensures coverage up to (approximately) the present day, even when provisional
+# data lags behind by several months.
 function _fetch_dst_files(; force_download::Bool = false)
     key = string(Dst)
     filepaths = String[]
@@ -258,6 +286,9 @@ function _fetch_dst_files(; force_download::Bool = false)
     cy = Dates.year(current_dt)
     cm = Dates.month(current_dt)
 
+    # Track where provisional data stops so real-time can pick up.
+    prov_stop_year  = _DST_PROV_START_YEAR
+    prov_stop_month = 0
     done = false
 
     for year in _DST_PROV_START_YEAR:cy
@@ -275,9 +306,44 @@ function _fetch_dst_files(; force_download::Bool = false)
                     expiry_period  = Day(1),
                 )
                 push!(filepaths, fp)
+                prov_stop_year  = year
+                prov_stop_month = month
             catch
                 done = true
                 break
+            end
+        end
+    end
+
+    # -- Real-time (quicklook) DST: fill the gap from provisional to current month. -------
+    # Start from the month after the last successful provisional download.
+    rt_start_year  = prov_stop_year
+    rt_start_month = prov_stop_month + 1
+    if rt_start_month > 12
+        rt_start_year += 1
+        rt_start_month = 1
+    end
+
+    if rt_start_year < cy || (rt_start_year == cy && rt_start_month <= cm)
+        for year in rt_start_year:cy
+            start_m = (year == rt_start_year) ? rt_start_month : 1
+            end_m   = (year == cy) ? cm : 12
+
+            for month in start_m:end_m
+                ym = _dst_ym_str(year, month)
+                try
+                    fp = _download_file(
+                        "https://wdc.kugi.kyoto-u.ac.jp/dst_realtime/$(ym)/index.html",
+                        key,
+                        "dst_realtime_$(year)_$(lpad(month, 2, '0')).html";
+                        force_download = force_download,
+                        expiry_period  = Day(1),
+                    )
+                    push!(filepaths, fp)
+                catch
+                    # Real-time data may not exist for the current month yet; not fatal.
+                    @debug "Real-time Dst not available for $(ym)"
+                end
             end
         end
     end
