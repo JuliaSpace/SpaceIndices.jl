@@ -168,11 +168,11 @@ function _fetch_files(::Type{T}; force_download::Bool = false) where T<:SpaceInd
 
     for k in 1:num_T_urls
         filepaths[k - 1 + begin] = _download_file(
-                T_urls[k - 1 + begin],
-                key,
-                T_filenames[begin + k - 1];
-                force_download = force_download,
-                expiry_period  = T_expiry_periods[k - 1 + begin]
+            T_urls[k - 1 + begin],
+            key,
+            T_filenames[begin + k - 1];
+            force_download = force_download,
+            expiry_period  = T_expiry_periods[k - 1 + begin]
         )
     end
 

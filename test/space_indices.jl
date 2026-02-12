@@ -685,7 +685,6 @@ end
     # Compute Julia DTC
     vdtc = SpaceIndices._compute_dtc_from_dst(vdst, vbaseline)
 
-    # Fortran reference (from test/test_dtc_fortran.f output)
     # DTC[k] at each hourly grid point, computed by DTCMAKEDR_AUTO.f DSTDTC subroutine
     # with stub DTCAP returning ap=4 baseline.
     fortran_dtc = [
