@@ -189,6 +189,24 @@ function parse_files(::Type{Dst}, filepaths::Vector{String}; ap_source::Symbol =
     # Remove duplicate timestamps, keeping the latest value for each.
     _deduplicate_dst!(vjd, vdst)
 
+    # Extend the Dst series with quiet-time values (Dst = 0) beyond the last observation
+    # out to 5 days past the current time. This ensures:
+    #   - Any storm in progress at the data boundary recovers naturally through the
+    #     integral (the algorithm needs Dst = 0 to complete recovery/late-recovery phases).
+    #   - Queries for near-future times return physically consistent dTc values.
+    if !isempty(vjd)
+        jd_now  = datetime2julian(now(Dates.UTC))
+        jd_end  = max(last(vjd), jd_now) + 5.0  # 5 days of padding.
+        jd_step = 1.0 / 24.0                     # 1-hour step.
+        jd_next = last(vjd) + jd_step
+
+        while jd_next <= jd_end
+            push!(vjd,  jd_next)
+            push!(vdst, 0.0)
+            jd_next += jd_step
+        end
+    end
+
     # Compute the exospheric temperature change (dTc) from the Dst time series using the
     # JB2008 storm algorithm (Bowman et al., 2008).
     #
@@ -364,6 +382,10 @@ The Dst index measures the intensity of the globally symmetric part of the equat
 ring current. Negative values indicate geomagnetic storms. Values are linearly
 interpolated between hourly observations.
 
+For times beyond the last available observation, the Dst series is extended with quiet-time
+values (0 nT) so that any in-progress storm recovery completes naturally through the dTc
+integral.
+
 # Source
 
 WDC for Geomagnetism, Kyoto University.
@@ -395,6 +417,10 @@ integrated using the differential equations from Burke et al. as extended by Bow
 
 During non-storm periods, dTc is the Jacchia 1970 ap-based temperature (ap capped at 50)
 if Celestrak is initialized, or 0 otherwise.
+
+For times beyond the last available Dst observation, the Dst series is extended with
+quiet-time values (0 nT) so that any in-progress storm recovery completes naturally
+through the integral. In quiet extended regions the dTc converges to the ap baseline.
 
 # Reference
 
@@ -465,9 +491,12 @@ function _parse_dst_html!(vjd::Vector{Float64}, vdst::Vector{Float64}, filepath:
         (year == 0 || month == 0) && continue
 
         # Match all integers (positive and negative) in the line.
-        # A valid DST data line has exactly 25 integers: 1 day + 24 hourly values.
+        # A complete DST data line has 25 integers: 1 day + 24 hourly values.
+        # Partial lines (e.g. current day in real-time data) may have fewer because
+        # Kyoto fills not-yet-available hours with 9999 which can merge with adjacent
+        # values in the fixed-width format.
         int_matches = collect(eachmatch(r"-?\d+", clean))
-        length(int_matches) == 25 || continue
+        (2 <= length(int_matches) <= 25) || continue
 
         try
             day = parse(Int, int_matches[1].match)
@@ -476,8 +505,15 @@ function _parse_dst_html!(vjd::Vector{Float64}, vdst::Vector{Float64}, filepath:
             # Validate the date against the calendar.
             day > Dates.daysinmonth(year, month) && continue
 
-            for h in 0:23
+            n_hours = min(length(int_matches) - 1, 24)
+            for h in 0:(n_hours - 1)
                 dst_val = parse(Float64, int_matches[h + 2].match)
+
+                # Kyoto real-time pages use 9999 as a fill value for hours not yet
+                # available. Skip any value with |Dst| >= 9999 (real Dst never exceeds
+                # a few hundred nT).
+                abs(dst_val) >= 9999.0 && continue
+
                 jd = datetime2julian(DateTime(year, month, day, h, 0, 0))
                 push!(vjd,  jd)
                 push!(vdst, dst_val)
@@ -692,6 +728,7 @@ function _ap_to_dtc(ap::Float64)
     # Jacchia 1970 geomagnetic activity equation (DTCMAKEDR lines 254–255).
     return ap_capped + 100.0 * (1.0 - exp(-0.08 * ap_capped))
 end
+
 
 # -- Constants for the dTc computation -------------------------------------------------- #
 
