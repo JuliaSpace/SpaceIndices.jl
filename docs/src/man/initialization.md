@@ -56,3 +56,26 @@ SpaceIndices.init()
 ```julia-repl
 julia> SpaceIndices.init(SpaceIndices.Celestrak; filepaths = ["./SW-All.csv"])
 ```
+
+## Dst Index Set
+
+The `Dst` index set is **not** included in the default `SpaceIndices.init()` call because it
+downloads many monthly HTML files from the Kyoto WDC and depends on an ap data source
+(`Celestrak` or `Hpo`) being initialized first. It must be initialized separately:
+
+```julia-repl
+julia> SpaceIndices.init()                           # Initialize all default sets first
+julia> SpaceIndices.init(SpaceIndices.Dst)           # Then initialize Dst
+```
+
+The `Dst` set provides two indices: `:Dst` (the raw hourly Dst index in nT) and `:DTC_Dst`
+(the exospheric temperature variation in K, computed from Dst using the DTCMAKEDR storm
+algorithm from JB2008).
+
+By default, the non-storm dTc baseline is computed from Celestrak's 3-hour ap values. To use
+the higher-resolution hourly ap from the Hpo index set instead, pass the `ap_source` keyword:
+
+```julia-repl
+julia> SpaceIndices.init(SpaceIndices.Hpo)           # Initialize Hpo first
+julia> SpaceIndices.init(SpaceIndices.Dst; ap_source = :hpo)
+```

@@ -59,3 +59,10 @@ The following space indices are currently supported:
 |                     | `ap30`                | Linear geomagnetic activity index (30-minute)                      |                     |
 |                     | `Hp60`                | Geomagnetic index with 60-minute resolution                        |                     |
 |                     | `ap60`                | Linear geomagnetic activity index (60-minute)                      |                     |
+| `Dst`               | `Dst`                 | Disturbance Storm Time index (hourly)                              | nT                  |
+|                     | `DTC_Dst`             | Exospheric temperature variation from Dst (DTCMAKEDR algorithm)    | K                   |
+
+!!! note
+    The `Dst` index set is not included in the default `SpaceIndices.init()` call. It must
+    be initialized separately after an ap data source (`Celestrak` or `Hpo`) is available.
+    See [Initialization of Space Indices](@ref) for details.
