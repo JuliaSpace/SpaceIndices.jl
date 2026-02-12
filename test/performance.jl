@@ -18,6 +18,7 @@ if Sys.isapple() && (VERSION.major == 1 && VERSION.minor >= 12)
 else
     @testset "Allocations Check" begin
         SpaceIndices.init()
+        SpaceIndices.init(SpaceIndices.Dst)  # Dst excluded from default init
 
         for index in _INDICES
             @test length(check_allocs(space_index, (Val{index}, Float64))) == 0

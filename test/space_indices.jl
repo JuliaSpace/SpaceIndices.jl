@@ -413,3 +413,258 @@ end
 
     SpaceIndices.destroy()
 end
+
+@testset "Dst" begin
+    SpaceIndices.init(SpaceIndices.Celestrak)
+    SpaceIndices.init(SpaceIndices.Dst)
+
+    # == Dst Index (hourly values) =========================================================
+
+    # Quiet period — 2020-06-19 12:00 UT.
+    dt = DateTime(2020, 6, 19, 12, 0, 0)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:Dst), dt)
+    @test r ≈ 9.0
+    r = space_index(Val(:Dst), jd)
+    @test r ≈ 9.0
+
+    # Halloween storm 2003 — peak around 2003-10-30 22:00 UT.
+    dt = DateTime(2003, 10, 30, 22, 0, 0)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:Dst), dt)
+    @test r ≈ -383.0
+    r = space_index(Val(:Dst), jd)
+    @test r ≈ -383.0
+
+    # Halloween storm — one hour later, verify distinct value.
+    dt = DateTime(2003, 10, 30, 23, 0, 0)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:Dst), dt)
+    @test r ≈ -371.0
+    r = space_index(Val(:Dst), jd)
+    @test r ≈ -371.0
+
+    # Linear interpolation test — halfway between 22:00 (-383) and 23:00 (-371).
+    dt = DateTime(2003, 10, 30, 22, 30, 0)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:Dst), dt)
+    @test r ≈ -377.0
+    r = space_index(Val(:Dst), jd)
+    @test r ≈ -377.0
+
+    # St. Patrick's Day storm 2015-03-17 22:00 UT.
+    dt = DateTime(2015, 3, 17, 22, 0, 0)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:Dst), dt)
+    @test r ≈ -234.0
+    r = space_index(Val(:Dst), jd)
+    @test r ≈ -234.0
+
+    # Early data — 1957-09-13 12:00 UT (major storm during IGY).
+    dt = DateTime(1957, 9, 13, 12, 0, 0)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:Dst), dt)
+    @test r ≈ -330.0
+    r = space_index(Val(:Dst), jd)
+    @test r ≈ -330.0
+
+    # == DTC_Dst (dTc derived from Dst) ====================================================
+
+    # Quiet period — dTc should be small and positive (Jacchia 1970 ap baseline).
+    dt = DateTime(2020, 6, 19, 12, 0, 0)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:DTC_Dst), dt)
+    @test 0.0 < r < 80.0
+    r = space_index(Val(:DTC_Dst), jd)
+    @test 0.0 < r < 80.0
+
+    # Halloween storm — dTc should be large and positive during the storm.
+    dt = DateTime(2003, 10, 30, 22, 0, 0)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:DTC_Dst), dt)
+    @test r > 300.0
+    r = space_index(Val(:DTC_Dst), jd)
+    @test r > 300.0
+
+    # St. Patrick's Day storm — dTc should be positive during the storm.
+    dt = DateTime(2015, 3, 17, 22, 0, 0)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:DTC_Dst), dt)
+    @test r > 200.0
+    r = space_index(Val(:DTC_Dst), jd)
+    @test r > 200.0
+
+    # dTc must always be non-negative.
+    dt = DateTime(2003, 10, 30, 0, 0, 0)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:DTC_Dst), dt)
+    @test r >= 0.0
+
+    SpaceIndices.destroy()
+end
+
+@testset "DTC_Dst vs JB2008 DTC Validation" begin
+    # Cross-validate the Dst-derived dTc against the pre-computed DTCFILE.TXT values from
+    # JB2008 during both storm and calm conditions. Celestrak must be initialized first to
+    # provide the Jacchia 1970 ap-based baseline.
+
+    SpaceIndices.init(SpaceIndices.Celestrak)
+    SpaceIndices.init(SpaceIndices.Dst)
+    SpaceIndices.init(SpaceIndices.JB2008)
+
+    # == Storm: St. Patrick's Day 2015 (clean, single storm) ===============================
+    # Main phase (17:00-22:00 UT): both algorithms use the same Burke et al. equations and
+    # agree to within 0.2-3 K.
+
+    for h in [17, 18, 19, 20, 21, 22]
+        jd = datetime2julian(DateTime(2015, 3, 17, h, 0, 0))
+        dtc_jb  = space_index(Val(:DTC),     jd)
+        dtc_dst = space_index(Val(:DTC_Dst), jd)
+        @test abs(dtc_dst - dtc_jb) < 5.0
+    end
+
+    # == Storm: Halloween 2003 first peak (20:00-23:00 UT Oct 29) ==========================
+    # Complex multi-storm; residuals ≤ 22 K driven by storm-onset detection differences.
+
+    for h in [20, 21, 22, 23]
+        jd = datetime2julian(DateTime(2003, 10, 29, h, 0, 0))
+        dtc_jb  = space_index(Val(:DTC),     jd)
+        dtc_dst = space_index(Val(:DTC_Dst), jd)
+        @test abs(dtc_dst - dtc_jb) < 22.0
+    end
+
+    # == Calm periods ======================================================================
+    # Both use the same ap-to-dTc lookup table from DTCMAKEDR; residuals ≤ 20 K are due to
+    # ap data source differences (Celestrak SW-All.csv vs SET SOLRESAP).
+
+    for dt in [
+        DateTime(2020, 6, 19, 12, 0, 0),
+        DateTime(2010, 1, 15, 12, 0, 0),
+        DateTime(2019, 8, 20, 12, 0, 0),
+        DateTime(2018, 3,  1, 12, 0, 0),
+    ]
+        jd = datetime2julian(dt)
+        dtc_jb  = space_index(Val(:DTC),     jd)
+        dtc_dst = space_index(Val(:DTC_Dst), jd)
+        @test abs(dtc_dst - dtc_jb) < 20.0
+    end
+
+    SpaceIndices.destroy()
+end
+
+@testset "DTC_Dst with Hpo ap source" begin
+    # Test the dTc computation using the hourly ap60 data from GFZ Hpo instead of the
+    # default 3-hour Celestrak ap. Hpo data starts in 1985.
+
+    SpaceIndices.init(SpaceIndices.Hpo)
+    SpaceIndices.init(SpaceIndices.Dst; ap_source = :hpo)
+    SpaceIndices.init(SpaceIndices.JB2008)
+
+    # == Basic behaviour: non-negative, reasonable quiet-time values =======================
+
+    dt = DateTime(2020, 6, 19, 12, 0, 0)
+    jd = datetime2julian(dt)
+    r  = space_index(Val(:DTC_Dst), jd)
+    @test r >= 0.0
+    @test r < 200.0
+
+    # == Storm: St. Patrick's Day 2015 =====================================================
+    # Should still produce large positive dTc during the storm.
+
+    for h in [17, 18, 19, 20, 21, 22]
+        jd = datetime2julian(DateTime(2015, 3, 17, h, 0, 0))
+        r  = space_index(Val(:DTC_Dst), jd)
+        @test r > 150.0
+    end
+
+    # == Storm: Halloween 2003 first peak ==================================================
+
+    for h in [20, 21, 22, 23]
+        jd = datetime2julian(DateTime(2003, 10, 29, h, 0, 0))
+        r  = space_index(Val(:DTC_Dst), jd)
+        @test r > 300.0
+    end
+
+    # == Cross-validation against JB2008 DTC ===============================================
+    # The Hpo hourly ap differs slightly from the SET SOLRESAP 3-hour ap used in
+    # DTCFILE.TXT, so tolerances are wider than for the Celestrak-based tests.
+
+    # Storm agreement (St. Patrick's Day 2015) — residuals ≤ 5 K.
+    for h in [17, 18, 19, 20, 21, 22]
+        jd = datetime2julian(DateTime(2015, 3, 17, h, 0, 0))
+        dtc_jb  = space_index(Val(:DTC),     jd)
+        dtc_dst = space_index(Val(:DTC_Dst), jd)
+        @test abs(dtc_dst - dtc_jb) < 5.0
+    end
+
+    # Calm period agreement — wider tolerance than Celestrak because Hpo hourly ap values
+    # can differ more from the SET SOLRESAP 3-hour ap used by JB2008. Residuals ≤ 34 K.
+    for dt in [
+        DateTime(2020, 6, 19, 12, 0, 0),
+        DateTime(2010, 1, 15, 12, 0, 0),
+        DateTime(2019, 8, 20, 12, 0, 0),
+        DateTime(2018, 3,  1, 12, 0, 0),
+    ]
+        jd = datetime2julian(dt)
+        dtc_jb  = space_index(Val(:DTC),     jd)
+        dtc_dst = space_index(Val(:DTC_Dst), jd)
+        @test abs(dtc_dst - dtc_jb) < 34.0
+    end
+
+    SpaceIndices.destroy()
+end
+
+@testset "DTC_Dst: Celestrak vs Hpo consistency" begin
+    # The two ap sources should produce broadly consistent dTc values for the same dates.
+
+    dates = [
+        DateTime(2020, 6, 19, 12, 0, 0),
+        DateTime(2010, 1, 15, 12, 0, 0),
+        DateTime(2015, 3, 17, 20, 0, 0),
+    ]
+
+    # -- Compute with Celestrak ap (default) --
+    SpaceIndices.init(SpaceIndices.Celestrak)
+    SpaceIndices.init(SpaceIndices.Dst; ap_source = :celestrak)
+    dtc_celestrak = [space_index(Val(:DTC_Dst), datetime2julian(dt)) for dt in dates]
+    SpaceIndices.destroy()
+
+    # -- Compute with Hpo ap --
+    SpaceIndices.init(SpaceIndices.Hpo)
+    SpaceIndices.init(SpaceIndices.Dst; ap_source = :hpo)
+    dtc_hpo = [space_index(Val(:DTC_Dst), datetime2julian(dt)) for dt in dates]
+    SpaceIndices.destroy()
+
+    # The two sources should agree within 8 K. Differences arise from the different temporal
+    # resolution (3h vs 1h) and minor data source discrepancies.
+    for i in eachindex(dates)
+        @test abs(dtc_celestrak[i] - dtc_hpo[i]) < 8.0
+    end
+end
+
+@testset "Dst [ERRORS]" begin
+    SpaceIndices.init(SpaceIndices.Celestrak)
+    SpaceIndices.init(SpaceIndices.Dst)
+
+    # The data starts on 1957-01-01.
+    dt = DateTime(1956, 12, 31)
+    jd = datetime2julian(dt)
+
+    @test_throws ArgumentError space_index(Val(:Dst), dt)
+    @test_throws ArgumentError space_index(Val(:Dst), jd)
+
+    @test_throws ArgumentError space_index(Val(:DTC_Dst), dt)
+    @test_throws ArgumentError space_index(Val(:DTC_Dst), jd)
+
+    SpaceIndices.destroy()
+end

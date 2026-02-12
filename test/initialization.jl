@@ -5,13 +5,14 @@
 ############################################################################################
 
 @testset "Functions init_space_index_sets and init_space_index_set" begin
-    # Initialize all space indices.
+    # Initialize all space indices (Dst is excluded by default).
     SpaceIndices.init()
 
     # Test if the structures were initialized.
     @test SpaceIndices._OPDATA_JB2008.data    isa SpaceIndices.JB2008
     @test SpaceIndices._OPDATA_CELESTRAK.data isa SpaceIndices.Celestrak
     @test SpaceIndices._OPDATA_HPO.data       isa SpaceIndices.Hpo
+    @test SpaceIndices._OPDATA_DST.data       isa Nothing  # Dst excluded by default
 
     # Destroy everything to test the individual initialization.
     SpaceIndices.destroy()
@@ -20,18 +21,42 @@
     @test SpaceIndices._OPDATA_JB2008.data    isa SpaceIndices.JB2008
     @test SpaceIndices._OPDATA_CELESTRAK.data isa Nothing
     @test SpaceIndices._OPDATA_HPO.data       isa Nothing
+    @test SpaceIndices._OPDATA_DST.data       isa Nothing
     SpaceIndices.destroy()
 
     SpaceIndices.init(SpaceIndices.Celestrak)
     @test SpaceIndices._OPDATA_JB2008.data    isa Nothing
     @test SpaceIndices._OPDATA_CELESTRAK.data isa SpaceIndices.Celestrak
     @test SpaceIndices._OPDATA_HPO.data       isa Nothing
+    @test SpaceIndices._OPDATA_DST.data       isa Nothing
     SpaceIndices.destroy()
 
     SpaceIndices.init(SpaceIndices.Hpo)
     @test SpaceIndices._OPDATA_JB2008.data    isa Nothing
     @test SpaceIndices._OPDATA_CELESTRAK.data isa Nothing
     @test SpaceIndices._OPDATA_HPO.data       isa SpaceIndices.Hpo
+    @test SpaceIndices._OPDATA_DST.data       isa Nothing
+    SpaceIndices.destroy()
+
+    # == Dst individual init (requires an ap source) =======================================
+
+    # Dst with Celestrak ap (default).
+    SpaceIndices.init(SpaceIndices.Celestrak)
+    SpaceIndices.init(SpaceIndices.Dst)
+    @test SpaceIndices._OPDATA_DST.data       isa SpaceIndices.Dst
+    @test SpaceIndices._OPDATA_CELESTRAK.data isa SpaceIndices.Celestrak
+    SpaceIndices.destroy()
+
+    # Dst with Hpo ap.
+    SpaceIndices.init(SpaceIndices.Hpo)
+    SpaceIndices.init(SpaceIndices.Dst; ap_source = :hpo)
+    @test SpaceIndices._OPDATA_DST.data isa SpaceIndices.Dst
+    @test SpaceIndices._OPDATA_HPO.data isa SpaceIndices.Hpo
+    SpaceIndices.destroy()
+
+    # Invalid ap_source should throw.
+    SpaceIndices.init(SpaceIndices.Celestrak)
+    @test_throws ArgumentError SpaceIndices.init(SpaceIndices.Dst; ap_source = :invalid)
     SpaceIndices.destroy()
 
     # == Blocklist =========================================================================
@@ -40,12 +65,22 @@
     @test SpaceIndices._OPDATA_JB2008.data    isa SpaceIndices.JB2008
     @test SpaceIndices._OPDATA_CELESTRAK.data isa Nothing
     @test SpaceIndices._OPDATA_HPO.data       isa SpaceIndices.Hpo
+    @test SpaceIndices._OPDATA_DST.data       isa Nothing
     SpaceIndices.destroy()
 
     SpaceIndices.init(; blocklist = [SpaceIndices.Hpo])
     @test SpaceIndices._OPDATA_JB2008.data    isa SpaceIndices.JB2008
     @test SpaceIndices._OPDATA_CELESTRAK.data isa SpaceIndices.Celestrak
     @test SpaceIndices._OPDATA_HPO.data       isa Nothing
+    @test SpaceIndices._OPDATA_DST.data       isa Nothing
+    SpaceIndices.destroy()
+
+    # Empty blocklist still skips Dst (auto_init is false); all others are initialized.
+    SpaceIndices.init(; blocklist = [])
+    @test SpaceIndices._OPDATA_JB2008.data    isa SpaceIndices.JB2008
+    @test SpaceIndices._OPDATA_CELESTRAK.data isa SpaceIndices.Celestrak
+    @test SpaceIndices._OPDATA_HPO.data       isa SpaceIndices.Hpo
+    @test SpaceIndices._OPDATA_DST.data       isa Nothing
     SpaceIndices.destroy()
 
 end
@@ -104,6 +139,9 @@ end
     @test_throws Exception space_index(Val(:Ap30), dt)
     @test_throws Exception space_index(Val(:Hp60), dt)
     @test_throws Exception space_index(Val(:Ap60), dt)
+
+    @test_throws Exception space_index(Val(:Dst),     dt)
+    @test_throws Exception space_index(Val(:DTC_Dst), dt)
 end
 
 @testset "Errors Related To Space Index Set Initialization" begin

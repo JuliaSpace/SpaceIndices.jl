@@ -37,5 +37,6 @@ include("./interpolations.jl")
 include("./space_index_sets/jb2008.jl")
 include("./space_index_sets/celestrak.jl")
 include("./space_index_sets/hpo.jl")
+include("./space_index_sets/dst.jl")
 
 end # module SpaceIndices

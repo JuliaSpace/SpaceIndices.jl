@@ -73,6 +73,15 @@ end
 ############################################################################################
 
 """
+    _auto_init(::Type{T}) where T<:SpaceIndexSet -> Bool
+
+Return whether the space index set `T` should be initialized automatically by the no-
+argument `init()`. Sets that return `false` (e.g. `Dst`) must be initialized explicitly via
+`init(T)`.
+"""
+_auto_init(::Type{<:SpaceIndexSet}) = true
+
+"""
     expiry_periods(::Type{T}) where T<:SpaceIndexSet -> Vector{DatePeriod}
 
 Return the expiry periods for the remote files associated with the space index set `T`. If a
@@ -159,11 +168,11 @@ function _fetch_files(::Type{T}; force_download::Bool = false) where T<:SpaceInd
 
     for k in 1:num_T_urls
         filepaths[k - 1 + begin] = _download_file(
-            T_urls[k - 1 + begin],
-            key,
-            T_filenames[begin + k - 1];
-            force_download = force_download,
-            expiry_period  = T_expiry_periods[k - 1 + begin]
+                T_urls[k - 1 + begin],
+                key,
+                T_filenames[begin + k - 1];
+                force_download = force_download,
+                expiry_period  = T_expiry_periods[k - 1 + begin]
         )
     end
 
