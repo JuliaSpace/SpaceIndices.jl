@@ -24,6 +24,10 @@
 #   (2008), "A New Empirical Thermospheric Density Model JB2008 Using New Solar and
 #   Geomagnetic Indices," AIAA/AAS Astrodynamics Specialist Conference, AIAA 2008-6438.
 #
+#   Bowman, B.R. (2008), DTCMAKEDR_AUTO.f — Fortran reference implementation of the
+#   dTc storm-time exospheric temperature correction algorithm for JB2008. Revised by
+#   D. Bouwer (2011–2023) and S. Mutschler (2023).
+#
 ############################################################################################
 
 ############################################################################################
@@ -315,14 +319,16 @@ Get the exospheric temperature variation [K] caused by geomagnetic activity at J
 This provides a real-time alternative to the pre-computed DTC values from DTCFILE.TXT
 (available via `Val(:DTC)` from the JB2008 index set), which have a ~45 day publication lag.
 
-During geomagnetic storms (Dst < -75 nT), the temperature change is integrated using the
-differential equations from Burke et al. as extended by Bowman et al. (2008):
-  - **Main phase**: Eq. (8)/(10) with storm-magnitude-dependent slope S
-  - **Recovery**: Eq. (12) with τ₁=∞, τ₂=1, S=0.13
-  - **Late recovery**: Eq. (13) with S=-2.5
+During geomagnetic storms (Dst < -75 nT, ΔDst ≥ 50 nT), the temperature change is
+integrated using the differential equations from Burke et al. as extended by Bowman et al.
+(2008), matching the DTCMAKEDR Fortran reference implementation:
+  - **Main phase**: Eq. (8)/(10) with storm-magnitude-dependent slope S;
+    Dst clamped to ≤ 0, no dTc floor.
+  - **Recovery**: Eq. (12) with S=0.13; storm terminates if dTc < 0.
+  - **Late recovery**: Eq. (13) with S=-2.5 (uses main-phase S when Dst dips).
 
-During non-storm periods, dTc is the Jacchia 1970 ap-based temperature if Celestrak is
-initialized, or 0 otherwise.
+During non-storm periods, dTc is the Jacchia 1970 ap-based temperature (ap capped at 50)
+if Celestrak is initialized, or 0 otherwise.
 
 # Reference
 
@@ -448,8 +454,7 @@ Build an hourly Jacchia 1970 dTc baseline from ap index data. Returns `nothing` 
 required index set is not initialized (falls back to zero baseline).
 
 For each hour, the ap value from 6.7 hours earlier is looked up and converted to a
-temperature increment via `_ap_to_dtc`. Values above ap=50 produce a capped dTc=148 K
-per JB2008 convention.
+temperature increment via `_ap_to_dtc` (Jacchia 1970 formula with ap capped at 50).
 
 # Arguments
 
@@ -574,16 +579,26 @@ end
 #                    dTc Computation from Dst (JB2008 Storm Algorithm)                     #
 ############################################################################################
 #
-# Implements the geomagnetic storm temperature model from:
+# Implements the geomagnetic storm temperature model from the DTCMAKEDR Fortran reference
+# code by Bruce R. Bowman (June 2008, rev. G May 2017), distributed with:
 #   Bowman, B.R., et al., "A New Empirical Thermospheric Density Model JB2008 Using New
 #   Solar and Geomagnetic Indices," AIAA 2008-6438, 2008.
 #
-# The algorithm detects storms (Dst < -75 nT) and integrates an exospheric temperature
-# change (dTc) through four phases:
-#   1. Main phase: temperature rises as ring current intensifies
-#   2. Sub-storm correction: handles temporary Dst recoveries during main phase
-#   3. Recovery phase: fast temperature decay after Dst minimum
-#   4. Late recovery phase: slow temperature decay until storm end
+# The algorithm detects storms (Dst < -75 nT, ΔDst ≥ 50 nT) and integrates an exospheric
+# temperature change (dTc) through four phases:
+#   1. Main phase: temperature rises as ring current intensifies (Eq. 8/10/11)
+#   2. Sub-storm correction: handles temporary Dst recoveries during main phase (Eq. 11)
+#   3. Recovery phase: fast temperature decay after Dst minimum (Eq. 12)
+#   4. Late recovery phase: slow temperature decay until storm end (Eq. 13)
+#
+# Key behaviors matched to the Fortran reference (DTCMAKEDR_AUTO.f):
+#   - Dst values clamped to ≤ 0 during main phase (SSC protection, lines 382–383)
+#   - No dTc floor during main phase; floor only in recovery/late recovery (Apr 2012 rev)
+#   - Storm terminated when dTc < 0 in recovery/late recovery → ap baseline (lines 407–414)
+#   - Late recovery uses main-phase slope S when Dst dips (line 430)
+#   - ap capped at 50 before Jacchia 1970 equation (line 251)
+#   - Slope change detected via centered Dst derivative < 100 nT/day (DSTREC)
+#   - Storm end duration = 0.0075 × ΔDst days with flat-bottom extension (DSTEND)
 #
 # Outside of storms, dTc is set to the Jacchia 1970 ap-based temperature (if Celestrak is
 # initialized) or 0 (if not). The ap-based baseline also provides the initial condition at
@@ -592,48 +607,24 @@ end
 
 # -- Non-storm dTc baseline (JB2008 DTCMAKEDR convention) -------------------------------- #
 
-# Standard ap index values (quantized per NOAA/IAGA convention).
-# The ap index only takes these discrete values.
-const _AP_TABLE = Float64[
-    0, 2, 3, 4, 5, 6, 7, 9, 12, 15, 18, 22, 27, 32, 39, 48,
-    56, 67, 80, 94, 111, 132, 154, 179, 207, 236, 300, 400,
-]
-
-# Corresponding dTc values [K] from the JB2008 DTCMAKEDR program.
-# These are the non-storm exospheric temperature increments used in DTCFILE.TXT,
-# derived from Jacchia's 1970 geomagnetic activity equation as implemented in
-# the JB2008 reference code. Values verified against DTCFILE.TXT for quiet periods.
-#
-# Per the JB2008 paper (Bowman et al., 2008, Section V.B): "if ap > 50, a value of
-# 50 is used for the dTc" — meaning ap values above 50 are capped and produce dTc=148 K
-# (the value at ap=50).
-const _DTC_TABLE = Float64[
-    0, 17, 24, 31, 38, 44, 50, 60, 74, 85, 94, 105, 115, 124, 135, 146,
-    148, 148, 148, 148, 148, 148, 148, 148, 148, 148, 148, 148,
-]
-
 # Jacchia 1970 lag: the 3-hour ap value is taken from 6.7 hours earlier.
 const _DTC_AP_LAG_HOURS = 6.7
 
 """
     _ap_to_dtc(ap::Float64) -> Float64
 
-Look up the non-storm dTc [K] for a given 3-hour ap index value using the JB2008
-DTCMAKEDR lookup table. Since the ap index is quantized to standard values, this
-performs a nearest-neighbor lookup (with linear interpolation for any non-standard
-values that may appear).
+Compute the non-storm dTc [K] from a 3-hour ap index value using the Jacchia 1970
+geomagnetic activity equation as implemented in DTCMAKEDR (lines 251–255):
+
+    if ap > 50: ap = 50    (cap per JB2008 convention)
+    dTc = ap + 100 × (1 − exp(−0.08 × ap))
 """
 function _ap_to_dtc(ap::Float64)
     ap <= 0.0 && return 0.0
-    ap >= 400.0 && return _DTC_TABLE[end]
-    # Find the bracketing interval and linearly interpolate.
-    for i in 1:(length(_AP_TABLE) - 1)
-        if ap <= _AP_TABLE[i + 1]
-            t = (ap - _AP_TABLE[i]) / (_AP_TABLE[i + 1] - _AP_TABLE[i])
-            return _DTC_TABLE[i] + t * (_DTC_TABLE[i + 1] - _DTC_TABLE[i])
-        end
-    end
-    return _DTC_TABLE[end]
+    # Cap ap at 50 per JB2008 convention (DTCMAKEDR line 251).
+    ap_capped = min(ap, 50.0)
+    # Jacchia 1970 geomagnetic activity equation (DTCMAKEDR lines 254–255).
+    return ap_capped + 100.0 * (1.0 - exp(-0.08 * ap_capped))
 end
 
 # -- Constants for the dTc computation -------------------------------------------------- #
@@ -646,6 +637,9 @@ const _DTC_TAU2 = 7.7
 
 # Storm detection threshold [nT].
 const _DTC_STORM_THRESHOLD = -75.0
+
+# Minimum storm magnitude (max − min) [nT] (DTCMAKEDR DSTBEG IMAG).
+const _DTC_STORM_MIN_MAGNITUDE = 50
 
 # Substorm correction factor (SFAC) for Equation (11).
 const _DTC_SFAC = 0.3
@@ -663,14 +657,18 @@ const _DTC_BETA  = 1.0 - 1.0 / _DTC_TAU2   # ≈ 0.870
 # Maximum scan distance for storm detection [hours].
 const _DTC_MAX_STORM_SCAN = 240  # 10 days
 
+# Slope limit for recovery inflection point detection [nT/day] (DSTREC SLPLIM).
+const _DTC_SLOPE_LIMIT = 100.0
+
 # -- Storm structure -------------------------------------------------------------------- #
 
 struct _DstStormEvent
-    start_idx::Int           # Index of storm commencement
+    start_idx::Int           # Index of storm commencement (Dst maximum before drop)
     min_idx::Int             # Index of Dst minimum (end of main phase)
     slope_change_idx::Int    # Index where recovery transitions to late recovery
     end_idx::Int             # Index of storm end
     dst_min::Float64         # Minimum Dst value during the storm [nT]
+    dst_max::Float64         # Dst value at storm commencement [nT]
 end
 
 # -- Main entry point ------------------------------------------------------------------- #
@@ -680,7 +678,8 @@ end
     _compute_dtc_from_dst(vdst)            -> Vector{Float64}
 
 Compute the exospheric temperature change dTc [K] from an hourly Dst time series using the
-JB2008 storm algorithm. Returns a vector of dTc values the same length as `vdst`.
+JB2008 storm algorithm (DTCMAKEDR). Returns a vector of dTc values the same length as
+`vdst`.
 
 If `vbaseline` is provided (same length as `vdst`), it supplies the Jacchia 1970 ap-based
 temperature for each hour. This is used as:
@@ -693,8 +692,8 @@ The algorithm is a two-pass procedure:
   1. Detect all storm events in the Dst time series.
   2. Integrate dTc through each storm using the appropriate phase equations.
 
-For multi-storm sequences where one storm begins before the previous one has fully
-recovered, the dTc is carried forward (not reset to zero).
+When dTc goes negative during recovery or late recovery, the storm is terminated early
+and the ap-based baseline is restored (matching DTCMAKEDR April 2012 revision).
 """
 function _compute_dtc_from_dst(
     vdst::Vector{Float64},
@@ -724,7 +723,7 @@ function _compute_dtc_from_dst(
             end
         end
 
-        _integrate_storm_dtc!(vdtc, vdst, storm, initial_dtc)
+        _integrate_storm_dtc!(vdtc, vdst, vbaseline, storm, initial_dtc)
     end
 
     return vdtc
@@ -733,10 +732,15 @@ end
 # -- Storm detection -------------------------------------------------------------------- #
 
 """
-    _detect_dst_storms(vdst::Vector{Float64}) -> Vector{_DstStormEvent}
+    _detect_dst_storms(vdst) -> Vector{_DstStormEvent}
 
-Scan the hourly Dst time series and return a vector of detected storm events. A storm is
-defined as a period where Dst drops below $(_DTC_STORM_THRESHOLD) nT.
+Scan the hourly Dst time series and return a vector of detected storm events.
+
+A storm requires:
+  - Dst minimum < $(_DTC_STORM_THRESHOLD) nT
+  - Magnitude ΔDst (max − min) ≥ $(_DTC_STORM_MIN_MAGNITUDE) nT
+
+Based on DSTSTM / DSTBEG / DSTMAX / DSTMIN / DSTREC / DSTEND from DTCMAKEDR.
 """
 function _detect_dst_storms(vdst::Vector{Float64})
     n = length(vdst)
@@ -752,22 +756,35 @@ function _detect_dst_storms(vdst::Vector{Float64})
 
         # -- Found a storm trigger at index `i`. Determine the full storm profile. -- #
 
-        # Storm integration begins at the trigger (first Dst < threshold). Before this
-        # point the Jacchia 1970 baseline provides the dTc value.
-        start_idx = i
+        # Find the storm commencement (Dst maximum) by scanning backward. This is
+        # used for the slope calculation and integration start, not for minimum search.
+        start_idx, dst_max = _find_storm_start(vdst, i)
 
-        # Find the Dst minimum (main phase end).
+        # Find the Dst minimum (main phase end). Search from the TRIGGER index `i`,
+        # not from start_idx, matching Fortran DSTMIN which starts from TSTART (the
+        # storm onset point). Starting from start_idx would cause premature
+        # termination via the IPTS counter during the pre-storm descent.
         min_idx, dst_min = _find_storm_minimum(vdst, i, n)
 
-        # Find the recovery slope change (search up to 72 hours past minimum).
-        slope_change_idx = _find_slope_change(vdst, min_idx, n)
+        # Magnitude check: ΔDst must be ≥ 50 nT AND min must be < -75.
+        deldst = dst_max - dst_min
+        if deldst < _DTC_STORM_MIN_MAGNITUDE || dst_min >= _DTC_STORM_THRESHOLD
+            # Not a valid storm; advance past the minimum to avoid infinite loop.
+            i = max(i + 1, min_idx + 1)
+            continue
+        end
 
-        # Find the storm end (search based on estimated duration from minimum).
-        end_idx = _find_storm_end(vdst, min_idx, dst_min, slope_change_idx, n)
+        # Find the storm end (includes flat-bottom handling, new-storm detection).
+        end_idx = _find_storm_end(vdst, min_idx, dst_min, dst_max, n)
 
-        push!(storms, _DstStormEvent(start_idx, min_idx, slope_change_idx, end_idx, dst_min))
+        # Find the recovery slope change (centered derivative method).
+        slope_change_idx = _find_slope_change(vdst, min_idx, end_idx, n)
 
-        # Resume scanning after this storm.
+        push!(storms, _DstStormEvent(
+            start_idx, min_idx, slope_change_idx, end_idx, dst_min, dst_max,
+        ))
+
+        # Resume scanning after this storm (end_idx ≥ min_idx ≥ i, so i always advances).
         i = end_idx + 1
     end
 
@@ -775,81 +792,210 @@ function _detect_dst_storms(vdst::Vector{Float64})
 end
 
 """
-    _find_storm_minimum(vdst, trigger_idx, n) -> (min_idx, dst_min)
+    _find_storm_start(vdst, trigger_idx) -> (start_idx, dst_max)
 
-Scan forward from the trigger point to find the global Dst minimum within the storm.
-The main phase is considered over when Dst has been rising for 12+ consecutive hours and
-has recovered by at least 30% of the minimum magnitude.
+Scan backward from the storm trigger (first Dst < -75) to find the Dst maximum (storm
+commencement point). Based on DSTMAX from DTCMAKEDR.
+
+Stops when 6 consecutive points ≥ -40 nT are found (quiet pre-storm period).
 """
-function _find_storm_minimum(vdst::Vector{Float64}, trigger_idx::Int, n::Int)
-    min_idx = trigger_idx
-    min_val = vdst[trigger_idx]
+function _find_storm_start(vdst::Vector{Float64}, trigger_idx::Int)
+    max_val = vdst[trigger_idx]
+    max_idx = trigger_idx
+    quiet_count = 0
 
-    # Track how long Dst has been above the current minimum — once it has risen
-    # significantly for many consecutive hours, the main phase is over.
-    consecutive_rise = 0
+    for k in (trigger_idx - 1):-1:max(1, trigger_idx - 72)
+        val = vdst[k]
 
-    for k in (trigger_idx + 1):min(n, trigger_idx + _DTC_MAX_STORM_SCAN)
-        if vdst[k] <= min_val
-            min_val = vdst[k]
-            min_idx = k
-            consecutive_rise = 0
-        else
-            consecutive_rise += 1
+        if val > max_val
+            max_val = val
+            max_idx = k
         end
 
-        # The main phase is over when Dst has been rising for 12+ hours AND has recovered
-        # by at least 30% of the minimum magnitude.
-        if consecutive_rise >= 12 && (vdst[k] - min_val) > abs(min_val) * 0.3
+        # Count consecutive quiet points (≥ -40). Reset if Dst drops below -60.
+        if val < -60.0
+            quiet_count = 0
+        elseif val >= -40.0
+            quiet_count += 1
+        end
+
+        if quiet_count >= 6
             break
         end
+    end
+
+    return max_idx, max_val
+end
+
+"""
+    _find_storm_minimum(vdst, start_idx, n) -> (min_idx, dst_min)
+
+Scan forward from the storm start to find the global Dst minimum.
+
+Termination criteria (matching DSTMIN from DTCMAKEDR):
+  - Recovery of 125 nT from minimum
+  - Recovery of 75 nT AND current Dst > -75
+  - 2 accumulated points ≥ -40 (after a valid minimum < -75 is found)
+"""
+function _find_storm_minimum(vdst::Vector{Float64}, start_idx::Int, n::Int)
+    min_val = Float64(typemax(Int32))
+    min_idx = start_idx
+    max_since_min = Float64(typemin(Int32))
+    ipts = 0
+
+    for k in (start_idx + 1):min(n, start_idx + _DTC_MAX_STORM_SCAN)
+        val = vdst[k]
+
+        # Track global minimum.
+        if val < min_val
+            min_val = val
+            min_idx = k
+            max_since_min = min_val  # Reset max tracker (DSTMIN: IMAX = IMIN).
+        end
+
+        # Track max since last minimum.
+        if val > max_since_min
+            max_since_min = val
+        end
+
+        # Termination: recovery of 125 nT from minimum (DSTMIN line 1011).
+        if max_since_min > min_val + 125
+            break
+        end
+
+        # Termination: recovery of 75 nT AND max above -75 (DSTMIN lines 1013–1014).
+        if (max_since_min - min_val > 75) && max_since_min > -75.0
+            break
+        end
+
+        # Termination: 2 accumulated points ≥ -40 after a valid minimum (DSTMIN
+        # lines 1021–1023). Points below -40 reset the counter.
+        if val < -40.0
+            ipts = 0
+        end
+        if min_val < -75.0
+            ipts += 1
+        end
+        if ipts >= 2
+            break
+        end
+    end
+
+    # If no valid minimum was found, return the start index.
+    if min_val > 0.0
+        return start_idx, vdst[start_idx]
     end
 
     return min_idx, min_val
 end
 
 """
-    _find_slope_change(vdst, min_idx, n) -> Int
+    _find_slope_change(vdst, min_idx, end_idx, n) -> Int
 
 After the Dst minimum, find the index where the recovery slope changes from fast (early
-recovery) to slow (late recovery). This is detected as the point where Dst has recovered
-to approximately 50% of its minimum value, or 24 hours after the minimum — whichever
-comes first.
-"""
-function _find_slope_change(vdst::Vector{Float64}, min_idx::Int, n::Int)
-    min_val = vdst[min_idx]
-    threshold = min_val * 0.5  # e.g., -50 nT when min is -100 nT
+recovery) to slow (late recovery).
 
-    for k in (min_idx + 1):min(n, min_idx + 72)
-        if vdst[k] >= threshold
-            return k
+Detection method (matching DSTREC from DTCMAKEDR):
+  - Compute centered Dst derivative: slope = (Dst[k+1] - Dst[k-1]) / (2 × Δt) [nT/day]
+  - Slope change detected when slope < 100 nT/day for 3 instances
+  - Also stops at 6 accumulated points ≥ -40 (backstop)
+"""
+function _find_slope_change(
+    vdst::Vector{Float64},
+    min_idx::Int,
+    end_idx::Int,
+    n::Int,
+)
+    dtdst = 1.0 / 24.0  # 1 hour in days
+    irec = 0
+    ipts = 0
+
+    # Start 2 hours after minimum (DSTREC: TSTEP = TMIN + DTDST, then TSTEP + DTDST).
+    for k in (min_idx + 2):min(n - 1, end_idx)
+        # Centered derivative (DSTREC line 1064).
+        slope = (vdst[k + 1] - vdst[k - 1]) / (2.0 * dtdst)
+
+        if slope < _DTC_SLOPE_LIMIT
+            irec += 1
+            if irec >= 3
+                return k - 1  # DSTREC: TREC = TSTEP - DTDST
+            end
+        end
+
+        # Backstop: 6 accumulated points ≥ -40 (DSTREC lines 1073–1074).
+        if vdst[k] >= -40.0
+            ipts += 1
+        end
+        if ipts >= 6
+            break
         end
     end
 
-    # Default: 24 hours after the minimum.
-    return min(n, min_idx + 24)
+    # Default: end_idx (DSTREC: TREC = TEND).
+    return end_idx
 end
 
 """
-    _find_storm_end(vdst, min_idx, dst_min, slope_change_idx, n) -> Int
+    _find_storm_end(vdst, min_idx, dst_min, dst_max, n) -> Int
 
-Determine the storm end point. The storm ends when Dst rises above $(_DTC_STORM_THRESHOLD)
-nT, or after an estimated duration based on storm magnitude — whichever comes first.
+Determine the storm end point. Based on DSTEND from DTCMAKEDR.
+
+1. Extends the minimum forward through flat bottoms (within 15 nT of minimum).
+2. Computes estimated duration: 0.0075 × ΔDst days (where ΔDst = max − min).
+3. Steps forward checking for:
+   - 6 accumulated points with Dst > -75 nT → storm end
+   - Dst drops by > 75 nT from a local max → new storm (end at local max)
+   - Estimated duration reached → storm end
 """
 function _find_storm_end(
     vdst::Vector{Float64},
     min_idx::Int,
     dst_min::Float64,
-    slope_change_idx::Int,
+    dst_max::Float64,
     n::Int,
 )
-    # Empirical duration estimate: larger storms last longer.
-    # Clamped between 24 hours (minor storms) and 168 hours (7 days, extreme storms).
-    estimated_hours = clamp(round(Int, -dst_min * 0.4), 24, 168)
-    max_end = min(n, min_idx + estimated_hours)
+    # -- Flat bottom handling: extend minimum through points within 15 nT -- #
+    # (DSTEND lines 1109–1121)
+    min_ext_idx = min_idx
+    for k in (min_idx + 1):min(n, min_idx + _DTC_MAX_STORM_SCAN)
+        if vdst[k] > dst_min + 15.0
+            min_ext_idx = k - 1
+            break
+        end
+        min_ext_idx = k
+    end
 
-    for k in slope_change_idx:max_end
-        if vdst[k] >= _DTC_STORM_THRESHOLD
+    # -- Compute estimated end time: 0.0075 × ΔDst days (DSTEND line 1124) -- #
+    deldst = dst_max - dst_min  # Positive (e.g., 0 - (-200) = 200)
+    estimated_days = 0.0075 * deldst
+    estimated_hours = max(round(Int, estimated_days * 24.0), 6)
+    max_end = min(n, min_ext_idx + estimated_hours)
+
+    # -- Step forward looking for end conditions -- #
+    # (DSTEND lines 1130–1157)
+    ipts = 0
+    local_max = dst_min
+    local_max_idx = min_ext_idx
+
+    for k in (min_ext_idx + 1):max_end
+        val = vdst[k]
+
+        # Track local maximum during recovery.
+        if val > local_max
+            local_max = val
+            local_max_idx = k
+        end
+
+        # New storm detection: Dst drops by > 75 from local max (DSTEND line 1146).
+        if val - local_max < -75
+            return local_max_idx
+        end
+
+        # Accumulated points above -75 (DSTEND line 1152).
+        if val > _DTC_STORM_THRESHOLD
+            ipts += 1
+        end
+        if ipts >= 6
             return k
         end
     end
@@ -863,7 +1009,7 @@ end
     _dtc_slope(dst_min::Float64) -> Float64
 
 Compute the storm main phase slope S as a function of the storm Dst minimum. This is
-Equation (10) from JB2008:
+Equation (10) from JB2008 / DTCMAKEDR line 376:
 
     S = -1.5050×10⁻⁵ × DstMIN² - 1.0604×10⁻² × DstMIN - 3.20
 
@@ -876,27 +1022,58 @@ function _dtc_slope(dst_min::Float64)
     return -1.5050e-5 * dst_min^2 - 1.0604e-2 * dst_min - 3.20
 end
 
+# Restore baseline (or zero) dTc values for a range of indices. Called when a storm
+# is terminated early due to dTc going negative (DTCMAKEDR April 2012 revision).
+function _restore_baseline!(
+    vdtc::Vector{Float64},
+    vbaseline::Union{Vector{Float64}, Nothing},
+    from_idx::Int,
+    to_idx::Int,
+)
+    if !isnothing(vbaseline)
+        for k in from_idx:to_idx
+            vdtc[k] = vbaseline[k]
+        end
+    else
+        for k in from_idx:to_idx
+            vdtc[k] = 0.0
+        end
+    end
+end
+
 """
-    _integrate_storm_dtc!(vdtc, vdst, storm, initial_dtc) -> Nothing
+    _integrate_storm_dtc!(vdtc, vdst, vbaseline, storm, initial_dtc) -> Nothing
 
 Integrate the exospheric temperature change through a single storm event, writing the
-results into `vdtc`. The integration follows the JB2008 algorithm:
+results into `vdtc`. Matches the DSTDTC subroutine from DTCMAKEDR.
 
-  - **Main phase** (start → min): Equation (8) with slope S from Equation (10).
-    When Dst temporarily increases (substorms), Equation (11) is used instead.
-  - **Recovery** (min → slope_change): Equation (12) — `dTc₁ = dTc₀ + 0.13 × Dst₁`
-  - **Late recovery** (slope_change → end): Equation (13) — `dTc₁ = dTc₀ - 2.5(Dst₁-Dst₀)`
+  - **Main phase** (start → min+lag): Equation (8) with slope S from Equation (10).
+    Dst values are clamped to ≤ 0 to guard against SSC positive spikes.
+    When Dst increases (substorms), Equation (11) is used instead.
+    No dTc floor is applied during the main phase (per Fortran reference).
+  - **Recovery** (min+lag → slope_change+lag): Equation (12)
+  - **Late recovery** (slope_change+lag → end): Equation (13).
+    When Dst dips (ΔDst < 0), the main phase slope S is used instead of -2.5.
 
-A main-phase lag is applied to the Dst input:
+In recovery and late recovery, if dTc goes negative the storm is terminated early and
+the ap-based baseline is restored (DTCMAKEDR April 2012 revision, lines 407–414, 436–443).
+
+The Fortran DTCMAKEDR applies a DELAY as a pure output time shift (lines 345–348,
+457–458, 468–477): the integration runs at "integration time" TSTEP with Dst accessed
+at TSTEP (no lag), and the output is mapped to time TSTEP + DELAY. This means:
+  - Output at time T uses Dst from time T − DELAY (uniform lag on ALL phases)
+  - Phase boundaries in the output domain are shifted by +DELAY
+
+To match this, the lag is applied uniformly to ALL Dst accesses (not just main phase),
+and the phase boundaries are shifted by +lag:
   - 0 hours for large storms (DstMIN < -350 nT)
   - 1 hour for moderate storms (-350 ≤ DstMIN < -250 nT)
   - 2 hours for minor storms (DstMIN ≥ -250 nT)
-
-dTc is clamped to be non-negative at every step.
 """
 function _integrate_storm_dtc!(
     vdtc::Vector{Float64},
     vdst::Vector{Float64},
+    vbaseline::Union{Vector{Float64}, Nothing},
     storm::_DstStormEvent,
     initial_dtc::Float64,
 )
@@ -905,7 +1082,7 @@ function _integrate_storm_dtc!(
     # Compute the main phase slope.
     S = _dtc_slope(dst_min)
 
-    # Determine the main phase lag [hours].
+    # Determine the DELAY lag [hours] (DTCMAKEDR lines 345–347).
     lag = if dst_min < -350.0
         0
     elseif dst_min < -250.0
@@ -914,47 +1091,80 @@ function _integrate_storm_dtc!(
         2
     end
 
+    # Phase boundaries shifted by lag to match Fortran's output time mapping
+    # (DTCMAKEDR lines 396/422/449 use TMIN/TREC/TEND without DELAY, but the
+    # output is at TSTEP + DELAY, so boundaries in the output domain are shifted).
+    main_end  = min(end_idx, min_idx + lag)
+    recov_end = min(end_idx, slope_change_idx + lag)
+
     dtc = initial_dtc
 
     for k in (start_idx + 1):end_idx
-        if k <= min_idx
-            # -- Main phase: Equation (8) with substorm correction (11) -- #
-            k_curr = max(1, k - lag)
-            k_prev = max(1, k - 1 - lag)
-            dst_curr = vdst[k_curr]
-            dst_prev = vdst[k_prev]
+        # All Dst accesses use the lagged index (= integration time = output − DELAY).
+        k_lag      = max(1, k - lag)
+        k_lag_prev = max(1, k - 1 - lag)
 
-            if dst_curr <= dst_prev
+        if k <= main_end
+            # -- Main phase: Equation (8) with substorm correction (11) -- #
+
+            # Clamp Dst to ≤ 0 to guard against SSC positive spikes
+            # (DTCMAKEDR lines 382–383).
+            dst_curr = min(0.0, Float64(vdst[k_lag]))
+            dst_prev = min(0.0, Float64(vdst[k_lag_prev]))
+
+            deldst = dst_curr - dst_prev
+
+            if deldst >= 0.0
+                # Dst increasing or flat (substorm recovery): Equation (11).
+                #   dTc₁ = dTc₀ - SFAC × S × ΔDst
+                # (DTCMAKEDR lines 387–388)
+                dtc = dtc - _DTC_SFAC * S * deldst
+            else
                 # Dst decreasing (main phase intensification): Equation (8).
                 #   dTc₁ = α × dTc₀ + S × [Dst₁ - β × Dst₀]
-                # S is negative, and [Dst₁ - β×Dst₀] is typically negative when Dst is
-                # dropping, so the product S×[...] is positive → dTc increases.
+                # (DTCMAKEDR lines 390–391)
                 dtc = _DTC_ALPHA * dtc + S * (dst_curr - _DTC_BETA * dst_prev)
-            else
-                # Dst increasing during main phase (substorm recovery): Equation (11).
-                #   dTc₁ = dTc₀ - SFAC × S × (Dst₁ - Dst₀)
-                # S is negative, (Dst₁ - Dst₀) > 0, so -SFAC×S×(...) > 0 → dTc continues
-                # to increase (the thermosphere doesn't cool during brief substorms).
-                dtc = dtc - _DTC_SFAC * S * (dst_curr - dst_prev)
             end
 
-        elseif k <= slope_change_idx
+            # No dTc floor during main phase (per Fortran reference).
+
+        elseif k <= recov_end
             # -- Recovery phase: Equation (12) -- #
-            #   dTc₁ = dTc₀ + 0.13 × Dst₁
-            # Dst₁ is negative → dTc decreases (temperature recovering).
-            dtc = dtc + _DTC_RECOVERY_SLOPE * vdst[k]
+            #   dTc₁ = dTc₀ + 0.13 × Dst₁  (Dst at integration time = k − lag)
+            # (DTCMAKEDR lines 401–403)
+            dtc = dtc + _DTC_RECOVERY_SLOPE * vdst[k_lag]
+
+            # Terminate storm if dTc goes negative (DTCMAKEDR April 2012, lines 407–414).
+            if dtc < 0.0
+                dtc = 0.0
+                vdtc[k] = dtc
+                _restore_baseline!(vdtc, vbaseline, k + 1, end_idx)
+                return nothing
+            end
 
         else
             # -- Late recovery phase: Equation (13) -- #
-            #   dTc₁ = dTc₀ + S_late × (Dst₁ - Dst₀)
-            # S_late = -2.5. Dst is recovering (Dst₁ > Dst₀), so (Dst₁-Dst₀) > 0
-            # and S_late×(...) < 0 → dTc decreases.
-            dtc = dtc + _DTC_LATE_RECOVERY_SLOPE * (vdst[k] - vdst[k - 1])
-        end
+            # Dst derivative at integration time (DTCMAKEDR lines 426–427).
+            deldst = vdst[k_lag] - vdst[k_lag_prev]
 
-        # dTc cannot be negative (the thermosphere doesn't cool below the quiet-time
-        # baseline from this mechanism alone).
-        dtc = max(0.0, dtc)
+            if deldst < 0.0
+                # Dst dipping during late recovery: use main phase slope S
+                # (DTCMAKEDR line 430: IF (DELDST.LT.0.D0) DERIV = SLPMAIN).
+                dtc = dtc + S * deldst
+            else
+                # Dst recovering: use late recovery slope -2.5
+                # (DTCMAKEDR lines 428–429).
+                dtc = dtc + _DTC_LATE_RECOVERY_SLOPE * deldst
+            end
+
+            # Terminate storm if dTc goes negative (DTCMAKEDR April 2012, lines 436–443).
+            if dtc < 0.0
+                dtc = 0.0
+                vdtc[k] = dtc
+                _restore_baseline!(vdtc, vbaseline, k + 1, end_idx)
+                return nothing
+            end
+        end
 
         vdtc[k] = dtc
     end
