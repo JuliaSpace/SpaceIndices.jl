@@ -141,7 +141,7 @@ function expiry_periods(::Type{Dst})
         push!(_exp, Year(100))
     end
 
-    # Provisional: refresh daily to stay current.
+    # Provisional: refresh monthly (new data published ~monthly).
     current_dt = now()
     cy = Dates.year(current_dt)
     cm = Dates.month(current_dt)
@@ -149,15 +149,15 @@ function expiry_periods(::Type{Dst})
     for year in _DST_PROV_START_YEAR:cy
         end_m = (year == cy) ? cm : 12
         for _ in 1:end_m
-            push!(_exp, Day(1))
+            push!(_exp, Month(1))
         end
     end
 
-    # Real-time: refresh daily.
+    # Real-time: always re-download (Kyoto updates ~hourly, Day(0) = always expired).
     for year in _DST_PROV_START_YEAR:cy
         end_m = (year == cy) ? cm : 12
         for _ in 1:end_m
-            push!(_exp, Day(1))
+            push!(_exp, Day(0))
         end
     end
 
@@ -321,7 +321,7 @@ function _fetch_dst_files(; force_download::Bool = false)
                     key,
                     "dst_prov_$(year)_$(lpad(month, 2, '0')).html";
                     force_download = force_download,
-                    expiry_period  = Day(1),
+                    expiry_period  = Month(1),  # Provisional data updates ~monthly.
                 )
                 push!(filepaths, fp)
                 prov_stop_year  = year
@@ -355,7 +355,7 @@ function _fetch_dst_files(; force_download::Bool = false)
                         key,
                         "dst_realtime_$(year)_$(lpad(month, 2, '0')).html";
                         force_download = force_download,
-                        expiry_period  = Day(1),
+                        expiry_period  = Day(0),  # Always re-download (~hourly updates).
                     )
                     push!(filepaths, fp)
                 catch
