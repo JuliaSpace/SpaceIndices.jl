@@ -386,8 +386,8 @@ function _parse_dst_html!(vjd::Vector{Float64}, vdst::Vector{Float64}, filepath:
             for (mname, mnum) in _DST_MONTH_NAMES
                 if occursin(mname, upper)
                     m = match(r"(\d{4})", clean)
-                    if !isnothing(m)
-                        year  = parse(Int, m.captures[1])
+                    if !isnothing(m) && !isnothing(m.captures[1])
+                        year  = parse(Int, m.captures[1]::SubString{String})
                         month = mnum
                     end
                     break
