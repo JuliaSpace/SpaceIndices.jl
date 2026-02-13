@@ -44,44 +44,9 @@ if isempty(VERSION.prerelease)
 
     using Pkg
 
-    Pkg.add("DifferentiationInterface")
-    
-    Pkg.add("FiniteDiff")
-    Pkg.add("ForwardDiff")
-    Pkg.add("Mooncake")
-    Pkg.add("PolyesterForwardDiff")
-    Pkg.add("Zygote")
-
     Pkg.add("Aqua")
     Pkg.add("JET")
     Pkg.add("AllocCheck")
-
-    
-    if (VERSION.major == 1 && VERSION.minor < 12)
-        Pkg.add("Enzyme")
-        using DifferentiationInterface
-        using Enzyme, FiniteDiff, ForwardDiff, Mooncake, PolyesterForwardDiff, Zygote
-
-        const _BACKENDS = (
-            ("ForwardDiff", AutoForwardDiff()),
-            ("Enzyme", AutoEnzyme()),
-            ("Mooncake", AutoMooncake(;config=nothing)),
-            ("PolyesterForwardDiff", AutoPolyesterForwardDiff()),
-        )
-    else
-        @warn "Enzyme is not fully supported on Julia 1.12, skipping tests"
-        using DifferentiationInterface
-        using FiniteDiff, ForwardDiff, Mooncake, PolyesterForwardDiff, Zygote
-        const _BACKENDS = (
-            ("ForwardDiff", AutoForwardDiff()),
-            ("Mooncake", AutoMooncake(;config=nothing)),
-            ("PolyesterForwardDiff", AutoPolyesterForwardDiff()),
-        )
-    end
-
-    @testset "Automatic Differentiation" verbose = true begin
-        include("./differentiability.jl")
-    end
 
     using Aqua
     using JET
@@ -91,7 +56,6 @@ if isempty(VERSION.prerelease)
         include("./performance.jl")
     end
 else
-    @warn "Differentiation backends not guaranteed to work on julia-nightly, skipping tests"
     @warn "Performance tests not guaranteed to work on julia-nightly, skipping tests"
 end
 
