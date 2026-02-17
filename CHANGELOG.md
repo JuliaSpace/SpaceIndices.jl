@@ -1,6 +1,14 @@
 SpaceIndices.jl Changelog
 =========================
 
+Version 2.1.0
+-------------
+
+- ![Feature][badge-feature] We added the support for the Dst index. (PR [#11][gh-pr-11])
+- ![Enhancement][badge-enhancement] The differentiability tests were moved to an external
+  package, leading to a huge reduction in the testing time of SpaceIndices.jl. (PR
+[#11][gh-pr-11])
+
 Version 2.0.1
 -------------
 
@@ -99,3 +107,5 @@ Version 0.1.0
 [gh-pr-3]: https://github.com/JuliaSpace/SpaceIndices.jl/pull/3
 [gh-pr-7]: https://github.com/JuliaSpace/SpaceIndices.jl/pull/7
 [gh-pr-9]: https://github.com/JuliaSpace/SpaceIndices.jl/pull/9
+[gh-pr-11]: https://github.com/JuliaSpace/SpaceIndices.jl/pull/11
+[gh-pr-12]: https://github.com/JuliaSpace/SpaceIndices.jl/pull/12
