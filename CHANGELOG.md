@@ -7,7 +7,7 @@ Version 2.1.0
 - ![Feature][badge-feature] We added the support for the Dst index. (PR [#11][gh-pr-11])
 - ![Enhancement][badge-enhancement] The differentiability tests were moved to an external
   package, leading to a huge reduction in the testing time of SpaceIndices.jl. (PR
-[#11][gh-pr-11])
+  [#12][gh-pr-12])
 
 Version 2.0.1
 -------------
