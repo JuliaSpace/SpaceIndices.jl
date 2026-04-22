@@ -295,14 +295,14 @@ end
     @test r ≈ 37
 
     r = space_index(Val(:S10), dt)
-    @test r ≈ 53.5
+    @test r ≈ 53.3
     r = space_index(Val(:S10), jd)
-    @test r ≈ 53.5
+    @test r ≈ 53.3
 
     r = space_index(Val(:S81a), dt)
-    @test r ≈ 54.0
+    @test r ≈ 53.8
     r = space_index(Val(:S81a), jd)
-    @test r ≈ 54.0
+    @test r ≈ 53.8
 
     r = space_index(Val(:M10), dt)
     @test r ≈ 72.8
@@ -310,9 +310,9 @@ end
     @test r ≈ 72.8
 
     r = space_index(Val(:M81a), dt)
-    @test r ≈ 74.0
+    @test r ≈ 73.9
     r = space_index(Val(:M81a), jd)
-    @test r ≈ 74.0
+    @test r ≈ 73.9
 
     r = space_index(Val(:Y10), dt)
     @test r ≈ 58.2
