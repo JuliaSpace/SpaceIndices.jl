@@ -2,8 +2,8 @@ name = "SpaceIndices"
 uuid = "5a540a4e-639f-452a-b107-23ea09ed4d36"
 license = "MIT"
 desc = "A package to fetch and parse space indices."
-authors = ["Ronan Arraes Jardim Chagas <ronisbr@gmail.com>"]
 version = "2.1.0"
+authors = ["Ronan Arraes Jardim Chagas <ronisbr@gmail.com>"]
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -18,7 +18,7 @@ Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 Dates = "1.6"
 DelimitedFiles = "1.6"
 Downloads = "1"
-JSON = "0.21"
+JSON = "0.21, 1"
 OptionalData = "1"
 Reexport = "1"
 Scratch = "1"
