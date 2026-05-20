@@ -44,10 +44,18 @@ const _DST_PROV_START_YEAR  = 2021
 
 # Month name lookup for parsing the header in DST HTML pages.
 const _DST_MONTH_NAMES = Dict{String, Int}(
-    "JANUARY"   => 1,  "FEBRUARY"  => 2,  "MARCH"     => 3,
-    "APRIL"     => 4,  "MAY"       => 5,  "JUNE"      => 6,
-    "JULY"      => 7,  "AUGUST"    => 8,  "SEPTEMBER" => 9,
-    "OCTOBER"   => 10, "NOVEMBER"  => 11, "DECEMBER"  => 12
+    "JANUARY"   => 1,
+    "FEBRUARY"  => 2,
+    "MARCH"     => 3,
+    "APRIL"     => 4,
+    "MAY"       => 5,
+    "JUNE"      => 6,
+    "JULY"      => 7,
+    "AUGUST"    => 8,
+    "SEPTEMBER" => 9,
+    "OCTOBER"   => 10,
+    "NOVEMBER"  => 11,
+    "DECEMBER"  => 12
 )
 
 ############################################################################################
@@ -227,7 +235,7 @@ end
 # ap data source (Celestrak or Hpo) being initialized first.
 _auto_init(::Type{Dst}) = false
 
-# -- Specialized init for Dst --------------------------------------------------------------- #
+# == Specialized init for Dst ==============================================================
 
 """
     init(::Type{Dst}; ap_source::Symbol = :celestrak, kwargs...) -> Nothing
@@ -273,104 +281,6 @@ function init(
     push!(handler, obj)
 
     return nothing
-end
-
-# Download DST monthly HTML files from the Kyoto WDC.
-#
-# Final files (1957/01–2020/12) are known to exist and always downloaded. Provisional files
-# (2021/01 onward) are fetched sequentially, stopping at the first month that returns a 404.
-# Real-time (quicklook) files are then fetched for any remaining months up to the current
-# month. This ensures coverage up to (approximately) the present day, even when provisional
-# data lags behind by several months.
-function _fetch_dst_files(; force_download::Bool = false)
-    key = string(Dst)
-    filepaths = String[]
-
-    # -- Final DST (1957/01–2020/12): all files exist. ------------------------------------
-    for year in _DST_FINAL_START_YEAR:_DST_FINAL_END_YEAR, month in 1:12
-        ym = _dst_ym_str(year, month)
-        fp = _download_file(
-            "https://wdc.kugi.kyoto-u.ac.jp/dst_final/$(ym)/index.html",
-            key,
-            "dst_final_$(year)_$(lpad(month, 2, '0')).html";
-            force_download = force_download,
-            expiry_period  = Year(100),
-        )
-        push!(filepaths, fp)
-    end
-
-    # -- Provisional DST (2021/01–present): stop at first missing month. ------------------
-    current_dt = now()
-    cy = Dates.year(current_dt)
-    cm = Dates.month(current_dt)
-
-    # Track where provisional data stops so real-time can pick up.
-    prov_stop_year  = _DST_PROV_START_YEAR
-    prov_stop_month = 0
-    done = false
-
-    for year in _DST_PROV_START_YEAR:cy
-        done && break
-        end_m = (year == cy) ? cm : 12
-
-        for month in 1:end_m
-            ym = _dst_ym_str(year, month)
-            try
-                fp = _download_file(
-                    "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/$(ym)/index.html",
-                    key,
-                    "dst_prov_$(year)_$(lpad(month, 2, '0')).html";
-                    force_download = force_download,
-                    expiry_period  = Month(1),  # Provisional data updates ~monthly.
-                )
-                push!(filepaths, fp)
-                prov_stop_year  = year
-                prov_stop_month = month
-            catch
-                done = true
-                break
-            end
-        end
-    end
-
-    # -- Real-time (quicklook) DST: fill the gap from provisional to current month. -------
-    # Start from the month after the last successful provisional download.
-    rt_start_year  = prov_stop_year
-    rt_start_month = prov_stop_month + 1
-    if rt_start_month > 12
-        rt_start_year += 1
-        rt_start_month = 1
-    end
-
-    if rt_start_year < cy || (rt_start_year == cy && rt_start_month <= cm)
-        for year in rt_start_year:cy
-            start_m = (year == rt_start_year) ? rt_start_month : 1
-            end_m   = (year == cy) ? cm : 12
-
-            for month in start_m:end_m
-                ym = _dst_ym_str(year, month)
-                try
-                    fp = _download_file(
-                        "https://wdc.kugi.kyoto-u.ac.jp/dst_realtime/$(ym)/index.html",
-                        key,
-                        "dst_realtime_$(year)_$(lpad(month, 2, '0')).html";
-                        force_download = force_download,
-                        expiry_period  = Day(0),  # Always re-download (~hourly updates).
-                    )
-                    push!(filepaths, fp)
-                catch
-                    # Real-time data may not exist for the current month yet; not fatal.
-                    @debug "Real-time Dst not available for $(ym)"
-                end
-            end
-        end
-    end
-
-    isempty(filepaths) && error(
-        "Failed to download any DST files. Check your network connection."
-    )
-
-    return filepaths
 end
 
 """
@@ -441,6 +351,104 @@ end
 # Build a "YYYYMM" string from year and month.
 function _dst_ym_str(year::Int, month::Int)
     return string(year) * lpad(month, 2, '0')
+end
+
+# Download DST monthly HTML files from the Kyoto WDC.
+#
+# Final files (1957/01–2020/12) are known to exist and always downloaded. Provisional files
+# (2021/01 onward) are fetched sequentially, stopping at the first month that returns a 404.
+# Real-time (quicklook) files are then fetched for any remaining months up to the current
+# month. This ensures coverage up to (approximately) the present day, even when provisional
+# data lags behind by several months.
+function _fetch_dst_files(; force_download::Bool = false)
+    key = string(Dst)
+    filepaths = String[]
+
+    # -- Final DST (1957/01–2020/12): all files exist. -------------------------------------
+    for year in _DST_FINAL_START_YEAR:_DST_FINAL_END_YEAR, month in 1:12
+        ym = _dst_ym_str(year, month)
+        fp = _download_file(
+            "https://wdc.kugi.kyoto-u.ac.jp/dst_final/$(ym)/index.html",
+            key,
+            "dst_final_$(year)_$(lpad(month, 2, '0')).html";
+            force_download = force_download,
+            expiry_period  = Year(100),
+        )
+        push!(filepaths, fp)
+    end
+
+    # -- Provisional DST (2021/01–present): stop at first missing month. -------------------
+    current_dt = now()
+    cy = Dates.year(current_dt)
+    cm = Dates.month(current_dt)
+
+    # Track where provisional data stops so real-time can pick up.
+    prov_stop_year  = _DST_PROV_START_YEAR
+    prov_stop_month = 0
+    done = false
+
+    for year in _DST_PROV_START_YEAR:cy
+        done && break
+        end_m = (year == cy) ? cm : 12
+
+        for month in 1:end_m
+            ym = _dst_ym_str(year, month)
+            try
+                fp = _download_file(
+                    "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/$(ym)/index.html",
+                    key,
+                    "dst_prov_$(year)_$(lpad(month, 2, '0')).html";
+                    force_download = force_download,
+                    expiry_period  = Month(1),  # Provisional data updates ~monthly.
+                )
+                push!(filepaths, fp)
+                prov_stop_year  = year
+                prov_stop_month = month
+            catch
+                done = true
+                break
+            end
+        end
+    end
+
+    # -- Real-time (quicklook) DST: fill the gap from provisional to current month. --------
+    # Start from the month after the last successful provisional download.
+    rt_start_year  = prov_stop_year
+    rt_start_month = prov_stop_month + 1
+    if rt_start_month > 12
+        rt_start_year += 1
+        rt_start_month = 1
+    end
+
+    if rt_start_year < cy || (rt_start_year == cy && rt_start_month <= cm)
+        for year in rt_start_year:cy
+            start_m = (year == rt_start_year) ? rt_start_month : 1
+            end_m   = (year == cy) ? cm : 12
+
+            for month in start_m:end_m
+                ym = _dst_ym_str(year, month)
+                try
+                    fp = _download_file(
+                        "https://wdc.kugi.kyoto-u.ac.jp/dst_realtime/$(ym)/index.html",
+                        key,
+                        "dst_realtime_$(year)_$(lpad(month, 2, '0')).html";
+                        force_download = force_download,
+                        expiry_period  = Day(0),  # Always re-download (~hourly updates).
+                    )
+                    push!(filepaths, fp)
+                catch
+                    # Real-time data may not exist for the current month yet; not fatal.
+                    @debug "Real-time Dst not available for $(ym)"
+                end
+            end
+        end
+    end
+
+    isempty(filepaths) && error(
+        "Failed to download any DST files. Check your network connection."
+    )
+
+    return filepaths
 end
 
 # Parse a single DST HTML file and append the hourly data to `vjd` and `vdst`.
@@ -545,9 +553,7 @@ function _deduplicate_dst!(vjd::Vector{Float64}, vdst::Vector{Float64})
     resize!(vdst, write_idx)
 end
 
-############################################################################################
-#                        Non-storm dTc Baseline from ap Data                               #
-############################################################################################
+# == Non-storm dTc Baseline from ap Data ===================================================
 
 """
     _build_ap_baseline(vjd, ap_source) -> Union{Vector{Float64}, Nothing}
@@ -574,7 +580,7 @@ function _build_ap_baseline(vjd::Vector{Float64}, ap_source::Symbol)
     end
 end
 
-# -- Celestrak (3-hour ap) ----------------------------------------------------------------- #
+# -- Celestrak (3-hour ap) -----------------------------------------------------------------
 
 function _build_baseline_celestrak(vjd::Vector{Float64})
     local celestrak
@@ -626,7 +632,7 @@ function _lookup_3h_ap(
     return ap_tuples[idx][block]
 end
 
-# -- Hpo (hourly ap60) -------------------------------------------------------------------- #
+# -- Hpo (hourly ap60) ---------------------------------------------------------------------
 
 function _build_baseline_hpo(vjd::Vector{Float64})
     local hpo
@@ -677,9 +683,7 @@ function _lookup_hourly_ap(
     return ap_tuples[idx][block]
 end
 
-############################################################################################
-#                    dTc Computation from Dst (JB2008 Storm Algorithm)                     #
-############################################################################################
+# == dTc Computation from Dst (JB2008 Storm Algorithm) =====================================
 #
 # Implements the geomagnetic storm temperature model from the DTCMAKEDR Fortran reference
 # code by Bruce R. Bowman (June 2008, rev. G May 2017), distributed with:
@@ -705,9 +709,8 @@ end
 # Outside of storms, dTc is set to the Jacchia 1970 ap-based temperature (if Celestrak is
 # initialized) or 0 (if not). The ap-based baseline also provides the initial condition at
 # storm commencement, matching the JB2008 reference implementation.
-############################################################################################
 
-# -- Non-storm dTc baseline (JB2008 DTCMAKEDR convention) -------------------------------- #
+# -- Non-storm dTc baseline (JB2008 DTCMAKEDR convention) ----------------------------------
 
 # Jacchia 1970 lag: the 3-hour ap value is taken from 6.7 hours earlier.
 const _DTC_AP_LAG_HOURS = 6.7
@@ -729,8 +732,7 @@ function _ap_to_dtc(ap::Float64)
     return ap_capped + 100.0 * (1.0 - exp(-0.08 * ap_capped))
 end
 
-
-# -- Constants for the dTc computation -------------------------------------------------- #
+# -- Constants for the dTc computation -----------------------------------------------------
 
 # Temperature relaxation time constant τ₁ [hours].
 const _DTC_TAU1 = 6.5
@@ -763,7 +765,7 @@ const _DTC_MAX_STORM_SCAN = 240  # 10 days
 # Slope limit for recovery inflection point detection [nT/day] (DSTREC SLPLIM).
 const _DTC_SLOPE_LIMIT = 100.0
 
-# -- Storm structure -------------------------------------------------------------------- #
+# -- Storm Structure -----------------------------------------------------------------------
 
 struct _DstStormEvent
     start_idx::Int           # Index of storm commencement (Dst maximum before drop)
@@ -774,7 +776,7 @@ struct _DstStormEvent
     dst_max::Float64         # Dst value at storm commencement [nT]
 end
 
-# -- Main entry point ------------------------------------------------------------------- #
+# -- Main Entry Point ----------------------------------------------------------------------
 
 """
     _compute_dtc_from_dst(vdst, vbaseline) -> Vector{Float64}
@@ -832,7 +834,7 @@ function _compute_dtc_from_dst(
     return vdtc
 end
 
-# -- Storm detection -------------------------------------------------------------------- #
+# -- Storm Detection -----------------------------------------------------------------------
 
 """
     _detect_dst_storms(vdst) -> Vector{_DstStormEvent}
@@ -1106,7 +1108,7 @@ function _find_storm_end(
     return max_end
 end
 
-# -- dTc integration -------------------------------------------------------------------- #
+# -- dTc integration -----------------------------------------------------------------------
 
 """
     _dtc_slope(dst_min::Float64) -> Float64
