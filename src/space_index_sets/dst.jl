@@ -72,73 +72,9 @@ end
 #                                           API                                            #
 ############################################################################################
 
-function urls(::Type{Dst})
-    _urls = String[]
-
-    # Final DST: 1957/01 - 2020/12.
-    for year in _DST_FINAL_START_YEAR:_DST_FINAL_END_YEAR
-        for month in 1:12
-            ym = _dst_ym_str(year, month)
-            push!(_urls, "https://wdc.kugi.kyoto-u.ac.jp/dst_final/$(ym)/index.html")
-        end
-    end
-
-    # Provisional DST: 2021/01 - current month.
-    current_dt = now()
-    cy = Dates.year(current_dt)
-    cm = Dates.month(current_dt)
-
-    for year in _DST_PROV_START_YEAR:cy
-        end_m = (year == cy) ? cm : 12
-        for month in 1:end_m
-            ym = _dst_ym_str(year, month)
-            push!(_urls, "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/$(ym)/index.html")
-        end
-    end
-
-    # Real-time (quicklook) DST: duplicates the provisional range.
-    # During _fetch_dst_files(), real-time is only tried for months where provisional is
-    # unavailable. Listed here for API completeness.
-    for year in _DST_PROV_START_YEAR:cy
-        end_m = (year == cy) ? cm : 12
-        for month in 1:end_m
-            ym = _dst_ym_str(year, month)
-            push!(_urls, "https://wdc.kugi.kyoto-u.ac.jp/dst_realtime/$(ym)/index.html")
-        end
-    end
-
-    return _urls
-end
-
-function filenames(::Type{Dst})
-    _fns = String[]
-
-    for year in _DST_FINAL_START_YEAR:_DST_FINAL_END_YEAR
-        for month in 1:12
-            push!(_fns, "dst_final_$(year)_$(lpad(month, 2, '0')).html")
-        end
-    end
-
-    current_dt = now()
-    cy = Dates.year(current_dt)
-    cm = Dates.month(current_dt)
-
-    for year in _DST_PROV_START_YEAR:cy
-        end_m = (year == cy) ? cm : 12
-        for month in 1:end_m
-            push!(_fns, "dst_prov_$(year)_$(lpad(month, 2, '0')).html")
-        end
-    end
-
-    for year in _DST_PROV_START_YEAR:cy
-        end_m = (year == cy) ? cm : 12
-        for month in 1:end_m
-            push!(_fns, "dst_realtime_$(year)_$(lpad(month, 2, '0')).html")
-        end
-    end
-
-    return _fns
-end
+# Dst requires explicit initialization — it downloads many monthly files and depends on an
+# ap data source (Celestrak or Hpo) being initialized first.
+auto_init(::Type{Dst}) = false
 
 function expiry_periods(::Type{Dst})
     _exp = DatePeriod[]
@@ -170,6 +106,36 @@ function expiry_periods(::Type{Dst})
     end
 
     return _exp
+end
+
+function filenames(::Type{Dst})
+    _fns = String[]
+
+    for year in _DST_FINAL_START_YEAR:_DST_FINAL_END_YEAR
+        for month in 1:12
+            push!(_fns, "dst_final_$(year)_$(lpad(month, 2, '0')).html")
+        end
+    end
+
+    current_dt = now()
+    cy = Dates.year(current_dt)
+    cm = Dates.month(current_dt)
+
+    for year in _DST_PROV_START_YEAR:cy
+        end_m = (year == cy) ? cm : 12
+        for month in 1:end_m
+            push!(_fns, "dst_prov_$(year)_$(lpad(month, 2, '0')).html")
+        end
+    end
+
+    for year in _DST_PROV_START_YEAR:cy
+        end_m = (year == cy) ? cm : 12
+        for month in 1:end_m
+            push!(_fns, "dst_realtime_$(year)_$(lpad(month, 2, '0')).html")
+        end
+    end
+
+    return _fns
 end
 
 function parse_files(::Type{Dst}, filepaths::Vector{String}; ap_source::Symbol = :celestrak)
@@ -229,11 +195,45 @@ function parse_files(::Type{Dst}, filepaths::Vector{String}; ap_source::Symbol =
     return Dst(vjd, vdst, vdtc)
 end
 
-@register Dst
+function urls(::Type{Dst})
+    _urls = String[]
 
-# Dst requires explicit initialization — it downloads many monthly files and depends on an
-# ap data source (Celestrak or Hpo) being initialized first.
-auto_init(::Type{Dst}) = false
+    # Final DST: 1957/01 - 2020/12.
+    for year in _DST_FINAL_START_YEAR:_DST_FINAL_END_YEAR
+        for month in 1:12
+            ym = _dst_ym_str(year, month)
+            push!(_urls, "https://wdc.kugi.kyoto-u.ac.jp/dst_final/$(ym)/index.html")
+        end
+    end
+
+    # Provisional DST: 2021/01 - current month.
+    current_dt = now()
+    cy = Dates.year(current_dt)
+    cm = Dates.month(current_dt)
+
+    for year in _DST_PROV_START_YEAR:cy
+        end_m = (year == cy) ? cm : 12
+        for month in 1:end_m
+            ym = _dst_ym_str(year, month)
+            push!(_urls, "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/$(ym)/index.html")
+        end
+    end
+
+    # Real-time (quicklook) DST: duplicates the provisional range.
+    # During _fetch_dst_files(), real-time is only tried for months where provisional is
+    # unavailable. Listed here for API completeness.
+    for year in _DST_PROV_START_YEAR:cy
+        end_m = (year == cy) ? cm : 12
+        for month in 1:end_m
+            ym = _dst_ym_str(year, month)
+            push!(_urls, "https://wdc.kugi.kyoto-u.ac.jp/dst_realtime/$(ym)/index.html")
+        end
+    end
+
+    return _urls
+end
+
+@register Dst
 
 # == Specialized init for Dst ==============================================================
 
