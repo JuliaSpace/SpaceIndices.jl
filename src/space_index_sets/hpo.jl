@@ -5,8 +5,8 @@
 #
 # Hpo space index set.
 # Default URLs:
-#       https://kp.gfz.de/app/files/Hp30_ap30_complete_series.txt
-#       https://kp.gfz.de/app/files/Hp60_ap60_complete_series.txt
+#     https://kp.gfz.de/fileadmin/files_for_gfz_cms/Hp30_ap30_complete_series.txt
+#     https://kp.gfz.de/fileadmin/files_for_gfz_cms/Hp60_ap60_complete_series.txt
 #
 # These files contains the Hpo geomagnetic indices from GFZ Helmholtz Centre Potsdam.
 # The Hpo index provides high-cadence geomagnetic activity measurements with 30-minute
