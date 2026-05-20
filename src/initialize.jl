@@ -28,7 +28,8 @@ and populate the object to be accessed by the function [`space_index`](@ref).
 function init(
     ::Type{T};
     filepaths::Union{Nothing, Vector{String}} = nothing,
-    force_download::Bool = false
+    force_download::Bool = false,
+    kwargs...
 ) where T<:SpaceIndexSet
     id = findfirst(x -> first(x) === T, _SPACE_INDEX_SETS)
     isnothing(id) && throw(ArgumentError("The space index set $T is not registered!"))
@@ -52,7 +53,7 @@ function init(
         fp = filepaths
     end
 
-    obj = parse_files(T, fp)
+    obj = parse_files(T, fp; kwargs...)
     push!(handler, obj)
 
     return nothing
