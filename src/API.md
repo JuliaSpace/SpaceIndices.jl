@@ -47,7 +47,7 @@ SpaceIndices.expiry_periods(::Type{MySpaceIndex}) = [Day(7)]
 ---
 
 ```julia
-SpaceIndices.parse_files(::Type{T}, filepaths::Vector{String}) where T<:SpaceIndexFile -> T
+SpaceIndices.parse_files(::Type{T}, filepaths::Vector{String}; kwargs...) where T<:SpaceIndexFile -> T
 ```
 
 This function must parse the files related to the space index set `T` using the files in
@@ -64,6 +64,9 @@ function SpaceIndices.parse_files(::Type{MySpaceIndex}, filepaths::Vector{String
     return MySpaceIndex(...)
 end
 ```
+
+All the keywords passed to the `SpaceIndices.init(T; kwargs...)` are redirected to
+`parse_files`.
 
 ---
 
