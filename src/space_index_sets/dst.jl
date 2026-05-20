@@ -233,7 +233,7 @@ end
 
 # Dst requires explicit initialization — it downloads many monthly files and depends on an
 # ap data source (Celestrak or Hpo) being initialized first.
-_auto_init(::Type{Dst}) = false
+auto_init(::Type{Dst}) = false
 
 # == Specialized init for Dst ==============================================================
 
