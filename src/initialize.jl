@@ -28,7 +28,8 @@ and populate the object to be accessed by the function [`space_index`](@ref).
 function init(
     ::Type{T};
     filepaths::Union{Nothing, Vector{String}} = nothing,
-    force_download::Bool = false
+    force_download::Bool = false,
+    kwargs...
 ) where T<:SpaceIndexSet
     id = findfirst(x -> first(x) === T, _SPACE_INDEX_SETS)
     isnothing(id) && throw(ArgumentError("The space index set $T is not registered!"))
@@ -52,7 +53,7 @@ function init(
         fp = filepaths
     end
 
-    obj = parse_files(T, fp)
+    obj = parse_files(T, fp; kwargs...)
     push!(handler, obj)
 
     return nothing
@@ -67,7 +68,7 @@ This function will download the remote files associated to the space index sets 
 not exist or if the expiry period has been elapsed. Afterward, it will parse the files and
 populate the objects to be accessed by the function [`space_index`](@ref).
 
-Space index sets where `_auto_init(T)` returns `false` (e.g. `Dst`) are always skipped and
+Space index sets where `auto_init(T)` returns `false` (e.g. `Dst`) are always skipped and
 must be initialized explicitly via `init(T)`.
 
 If the user does not want to initialize some additional sets, they can pass them in the
@@ -78,7 +79,7 @@ function init(; blocklist::Vector = [])
     # structure and its optional data handler.
     for (T, handler) in _SPACE_INDEX_SETS
         # Skip sets that require explicit initialization or are in the block list.
-        if !_auto_init(T) || (T ∈ blocklist)
+        if !auto_init(T) || (T ∈ blocklist)
             @debug "Skipping the space file $T."
             continue
         end

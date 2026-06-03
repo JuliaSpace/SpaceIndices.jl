@@ -18,48 +18,23 @@ function _download_file(
     force_download::Bool = false,
     expiry_period::DatePeriod = Day(7)
 )
-    # Get the scratch space where the files are located.
-    cache_dir          = @get_scratch!(key)
-    filepath           = joinpath(cache_dir, filename)
-    filepath_timestamp = joinpath(cache_dir, filename * "_timestamp")
+    filepath = get_filepath(filename, key)
 
     # We need to verify if we must re-download the data.
     download_file = false
+    timestamp = get_download_timestamp(filepath)
 
-    if force_download ||
-        isempty(readdir(cache_dir)) ||
-        !isfile(filepath) ||
-        !isfile(filepath_timestamp)
-
+    if force_download || isnothing(timestamp) || (now() >= timestamp + expiry_period)
         download_file = true
-
     else
-        # In this case, we should read the time stamp and verify if the file must be
-        # re-downloaded.
-        try
-            str       = read(filepath_timestamp, String)
-            tokens    = split(str, '\n')
-            timestamp = tokens |> first |> DateTime
-
-            if now() >= timestamp + expiry_period
-                download_file = true
-            else
-                @debug "We found a file that is less than $expiry_period old (timestamp = $timestamp). Hence, we will use it."
-            end
-        catch
-            # If any error occurred, we will download the data again.
-            download_file = true
-
-        end
+        @debug "We found a file that is less than $expiry_period old (timestamp = $timestamp). Hence, we will use it."
     end
 
     # If we need to re-download, we will rebuild the scratch space.
     if download_file
         @info "Downloading the file '$filename' from '$url'..."
         download(url, filepath)
-        open(filepath_timestamp, "w") do f
-            write(f, string(now()))
-        end
+        update_download_timestamp(filepath)
     end
 
     # Return the file path.

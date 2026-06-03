@@ -33,6 +33,7 @@ include("./destroy.jl")
 include("./download.jl")
 include("./initialize.jl")
 include("./interpolations.jl")
+include("./misc.jl")
 
 include("./space_index_sets/jb2008.jl")
 include("./space_index_sets/celestrak.jl")

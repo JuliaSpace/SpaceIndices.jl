@@ -41,13 +41,13 @@ set `T`. The remote files will always be downloaded if a time greater than this 
 elapsed after the last download. For example:
 
 ```julia
-SpaceIndices.filenames(::Type{MySpaceIndex}) = [Day(7)]
+SpaceIndices.expiry_periods(::Type{MySpaceIndex}) = [Day(7)]
 ```
 
 ---
 
 ```julia
-SpaceIndices.parse_files(::Type{T}, filepaths::Vector{String}) where T<:SpaceIndexFile -> T
+SpaceIndices.parse_files(::Type{T}, filepaths::Vector{String}; kwargs...) where T<:SpaceIndexFile -> T
 ```
 
 This function must parse the files related to the space index set `T` using the files in
@@ -60,10 +60,13 @@ function SpaceIndices.parse_files(::Type{MySpaceIndex}, filepaths::Vector{String
             ...
         end
     end
-        
+
     return MySpaceIndex(...)
 end
 ```
+
+All the keywords passed to the `SpaceIndices.init(T; kwargs...)` are redirected to
+`parse_files`.
 
 ---
 
@@ -78,6 +81,16 @@ SpaceIndices.space_index(::Val{:index}, jd::Number; kwargs...) -> Number
 where the space `index` for the `instant` will be returned.
 
 ## Optional API Functions
+
+```julia
+function SpaceIndices.auto_init(::Type{T}) where T<:SpaceIndexSet -> Bool
+```
+
+This function returns whether the space index set `T` should be initialized automatically by
+the no- argument `init()`. Sets that return `false` must be initialized explicitly via
+`init(T)`. By default, it always returns `true`.
+
+---
 
 ```julia
 function SpaceIndices.filenames(::Type{T}) where T<:SpaceIndexFile -> Vector{String}

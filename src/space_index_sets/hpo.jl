@@ -1,46 +1,28 @@
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#
-# Description
-# ==========================================================================================
+## Description #############################################################################
 #
 # Hpo space index set.
 # Default URLs:
-#       https://kp.gfz.de/app/files/Hp30_ap30_complete_series.txt
-#       https://kp.gfz.de/app/files/Hp60_ap60_complete_series.txt
+#     https://kp.gfz.de/fileadmin/files_for_gfz_cms/Hp30_ap30_complete_series.txt
+#     https://kp.gfz.de/fileadmin/files_for_gfz_cms/Hp60_ap60_complete_series.txt
 #
-# These files contains the Hpo geomagnetic indices from GFZ Helmholtz Centre Potsdam.
-# The Hpo index provides high-cadence geomagnetic activity measurements with 30-minute
-# (Hp30) and 60-minute (Hp60) resolution, similar to the Kp index but with finer temporal
+# These files contains the Hpo geomagnetic indices from GFZ Helmholtz Centre Potsdam. The
+# Hpo index provides high-cadence geomagnetic activity measurements with 30-minute (Hp30)
+# and 60-minute (Hp60) resolution, similar to the Kp index but with finer temporal
 # granularity. Documentation cna be found at:
-#       https://www.gfz.de/en/hpo-index
+#
+#     https://www.gfz.de/en/hpo-index
 #
 # References
-# Yamazaki, Y., Matzka, J. (2022). Hpo index: A new geomagnetic index with high time
-# resolution. Geophysical Research Letters, 49, e2022GL098860.
-# https://doi.org/10.1029/2022GL098860
 #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# [1] Yamazaki, Y., Matzka, J. (2022). Hpo index: A new geomagnetic index with high time
+#     resolution. Geophysical Research Letters, 49, e2022GL098860.
+#     https://doi.org/10.1029/2022GL098860
+#
+############################################################################################
 
 ############################################################################################
 #                                        Structure                                         #
 ############################################################################################
-
-# Exact mapping from Hp to ap values
-const HP_VALUES = [
-    0.000, 0.333, 0.667, 1.000, 1.333, 1.667, 2.000, 2.333, 2.667,
-    3.000, 3.333, 3.667, 4.000, 4.333, 4.667, 5.000, 5.333, 5.667,
-    6.000, 6.333, 6.667, 7.000, 7.333, 7.667, 8.000, 8.333, 8.667,
-    9.000, 9.333, 9.667, 10.000, 10.333, 10.667, 11.000, 11.333,
-    11.667, 12.000, 12.667, 13.333
-]
-
-const AP_VALUES = [
-    0, 2, 3, 4, 5, 6, 7, 9, 12,
-    15, 18, 22, 27, 32, 39, 48, 56, 67,
-    80, 94, 111, 132, 154, 179, 207, 236, 265,
-    294, 324, 355, 388, 421, 456, 494, 534,
-    574, 617, 705, 801
-]
 
 struct Hpo <: SpaceIndexSet
     vjd::Vector{Float64}
@@ -50,10 +32,103 @@ struct Hpo <: SpaceIndexSet
     vap60::Vector{NTuple{24, Float64}}
 end
 
+############################################################################################
+#                                        Constants                                         #
+############################################################################################
+
+# Exact mapping from Hp to ap values.
+const HP_VALUES = [
+    0.000,
+    0.333,
+    0.667,
+    1.000,
+    1.333,
+    1.667,
+    2.000,
+    2.333,
+    2.667,
+    3.000,
+    3.333,
+    3.667,
+    4.000,
+    4.333,
+    4.667,
+    5.000,
+    5.333,
+    5.667,
+    6.000,
+    6.333,
+    6.667,
+    7.000,
+    7.333,
+    7.667,
+    8.000,
+    8.333,
+    8.667,
+    9.000,
+    9.333,
+    9.667,
+    10.000,
+    10.333,
+    10.667,
+    11.000,
+    11.333,
+    11.667,
+    12.000,
+    12.667,
+    13.333
+]
+
+const AP_VALUES = [
+    0,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    9,
+    12,
+    15,
+    18,
+    22,
+    27,
+    32,
+    39,
+    48,
+    56,
+    67,
+    80,
+    94,
+    111,
+    132,
+    154,
+    179,
+    207,
+    236,
+    265,
+    294,
+    324,
+    355,
+    388,
+    421,
+    456,
+    494,
+    534,
+    574,
+    617,
+    705,
+    801
+]
+
+############################################################################################
+#                                           API                                            #
+############################################################################################
+
 function urls(::Type{Hpo})
     return [
-        "https://kp.gfz.de/app/files/Hp30_ap30_complete_series.txt",
-        "https://kp.gfz.de/app/files/Hp60_ap60_complete_series.txt",
+        "https://kp.gfz.de/fileadmin/files_for_gfz_cms/Hp30_ap30_complete_series.txt",
+        "https://kp.gfz.de/fileadmin/files_for_gfz_cms/Hp60_ap60_complete_series.txt",
         "https://isdc-data.gfz.de/geomagnetism/HpoForecast/v0102/output/Hpo/json/hpo_forecast_mean_bars_Hp30.json",
         "https://isdc-data.gfz.de/geomagnetism/HpoForecast/v0102/output/Hpo/json/hpo_forecast_mean_bars_Hp60.json"
     ]
@@ -62,8 +137,7 @@ end
 expiry_periods(::Type{Hpo}) = [Day(1), Day(1), Day(1), Day(1)]
 
 function parse_files(::Type{Hpo}, filepaths::Vector{String})
-    length(filepaths) == 4 ||
-        error("We need exactly 4 files to parse the Hpo index set.")
+    length(filepaths) == 4 || error("We need exactly 4 files to parse the Hpo index set.")
 
     # Parse the Hp30 historical file (complete record since 1985).
     # Returns: vjd, vhp30 (as NTuple{48}), vap30 (as NTuple{48})
@@ -74,9 +148,7 @@ function parse_files(::Type{Hpo}, filepaths::Vector{String})
     vjd_hp60, vhp60, vap60 = _parse_hpo_file_daily(filepaths[2], 24)
 
     # Verify that both files have the same dates
-    if vjd_hp30 != vjd_hp60
-        error("Hp30 and Hp60 files have different date ranges.")
-    end
+    (vjd_hp30 != vjd_hp60) && error("Hp30 and Hp60 files have different date ranges.")
 
     # Parse the Hp30 forecast JSON file (3-day nowcast + 3-day forecast).
     vjd_hp30_fc, vhp30_fc, vap30_fc = _parse_hpo_forecast_json(filepaths[3], 48)
@@ -104,13 +176,7 @@ function parse_files(::Type{Hpo}, filepaths::Vector{String})
         end
     end
 
-    return Hpo(
-        vjd_final,
-        vhp30_final,
-        vap30_final,
-        vhp60_final,
-        vap60_final
-    )
+    return Hpo(vjd_final, vhp30_final, vap30_final, vhp60_final, vap60_final)
 end
 
 @register Hpo
@@ -135,8 +201,8 @@ end
 
 Return the Ap30 index for the day at Julian Day `jd`.
 
-The Ap30 index is the linear equivalent of Hp30 geomagnetic activity. This function
-returns all 48 values for the day containing the given Julian Day.
+The Ap30 index is the linear equivalent of Hp30 geomagnetic activity. This function returns
+all 48 values for the day containing the given Julian Day.
 """
 function space_index(::Val{:Ap30}, jd::Number)
     obj = @object(Hpo)
@@ -165,8 +231,8 @@ end
 
 Return the ap60 index for the day at Julian Day `jd`.
 
-The ap60 index is the linear equivalent of Hp60 geomagnetic activity. This function
-returns all 24 values for the day containing the given Julian Day.
+The ap60 index is the linear equivalent of Hp60 geomagnetic activity. This function returns
+all 24 values for the day containing the given Julian Day.
 """
 function space_index(::Val{:Ap60}, jd::Number)
     obj = @object(Hpo)
@@ -174,6 +240,10 @@ function space_index(::Val{:Ap60}, jd::Number)
     values = obj.vap60
     return constant_interpolation(knots, values, jd)
 end
+
+############################################################################################
+#                                    Private Functions                                     #
+############################################################################################
 
 function _parse_hpo_file_daily(filepath::String, n_per_day::Int)
     # Dictionary to accumulate data by date
@@ -275,15 +345,16 @@ function _hp_to_ap(hp::Float64)
 
     # Find exact match in the table
     for i in 1:length(HP_VALUES)
-        if abs(hp_rounded - HP_VALUES[i]) < 0.01  # Small tolerance for floating point comparison
-            return Float64(AP_VALUES[i])
+        # Small tolerance for floating point comparison.
+        if abs(hp_rounded - HP_VALUES[i + begin - 1]) < 0.01
+            return Float64(AP_VALUES[i + begin - 1])
         end
     end
 
     # If no exact match, find the nearest lower value
     for i in length(HP_VALUES):-1:1
-        if hp_rounded >= HP_VALUES[i]
-            return Float64(AP_VALUES[i])
+        if hp_rounded >= HP_VALUES[i + begin - 1]
+            return Float64(AP_VALUES[i + begin - 1])
         end
     end
 
@@ -364,5 +435,3 @@ function _parse_hpo_forecast_json(filepath::String, n_per_day::Int)
 
     return vjd, vhp, vap
 end
-
-

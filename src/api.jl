@@ -73,13 +73,12 @@ end
 ############################################################################################
 
 """
-    _auto_init(::Type{T}) where T<:SpaceIndexSet -> Bool
+    auto_init(::Type{T}) where T<:SpaceIndexSet -> Bool
 
 Return whether the space index set `T` should be initialized automatically by the no-
-argument `init()`. Sets that return `false` (e.g. `Dst`) must be initialized explicitly via
-`init(T)`.
+argument `init()`. Sets that return `false` must be initialized explicitly via `init(T)`.
 """
-_auto_init(::Type{<:SpaceIndexSet}) = true
+auto_init(::Type{<:SpaceIndexSet}) = true
 
 """
     expiry_periods(::Type{T}) where T<:SpaceIndexSet -> Vector{DatePeriod}
