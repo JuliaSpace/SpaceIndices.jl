@@ -747,6 +747,66 @@ end
     end
 end
 
+@testset "Dst storm overlap regression (deep + late-recovery secondary dip)" begin
+    # Regression for a bug where _find_storm_start scanned backward without bounds,
+    # so a secondary dip below -75 nT during the long recovery of a deep storm would
+    # re-discover the original storm's SSC, producing two overlapping storm windows.
+    # The May 2024 Gannon storm with USGS-derived Dst exhibited this: both storms
+    # came back with start_idx = 2024-05-10T17:00:00, and the second storm's
+    # _integrate_storm_dtc! overwrote the first storm's dTc with corrupted state,
+    # producing inflated peaks (~1315 K vs the ~580 K SET reference).
+    #
+    # The synthetic series below reproduces the pattern: a deep main storm to -150 nT
+    # with a slow recovery that never reaches the quiet-period threshold (-40 nT),
+    # followed by a deeper secondary dip to -110 nT within 72 hours of the original
+    # SSC. Without the fix, _find_storm_start for the secondary trigger re-finds the
+    # quiet pre-storm region (Dst ≈ 0) of the first storm and returns the same
+    # start_idx. With the fix, the backward scan is bounded by the previous storm's
+    # end_idx and the secondary storm gets a distinct, non-overlapping window.
+
+    vdst = Float64[
+        # Hours 1-20: quiet pre-storm
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        # Hours 21-30: storm 1 onset and main phase down to -150 nT
+        -10, -30, -60, -100, -140, -150, -140, -120, -100, -80,
+        # Hours 31-40: storm 1 fast recovery
+        -76, -74, -72, -70, -68, -65, -60, -55, -50, -48,
+        # Hours 41-55: long late recovery — never reaches the -40 quiet threshold,
+        # gradually re-deepening into a secondary dip
+        -47, -46, -45, -45, -46, -47, -48, -50, -55, -60,
+        -65, -70, -75, -80, -90,
+        # Hours 56-60: secondary dip below -75 nT (new trigger; without the fix this
+        # would re-discover hour 20's SSC and produce an overlapping storm)
+        -100, -110, -105, -90, -75,
+        # Hours 61-80: full recovery to quiet
+        -65, -50, -35, -20, -10, -5, -2, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ]
+
+    storms = SpaceIndices._detect_dst_storms(vdst)
+
+    # The fix must produce at least 2 storms (both events are above the magnitude
+    # threshold) AND their windows must be strictly non-overlapping.
+    @test length(storms) >= 2
+
+    for s in 2:length(storms)
+        @test storms[s].start_idx > storms[s - 1].end_idx
+    end
+
+    # Sanity-check the first storm's profile (Gannon-style deep main phase).
+    s1 = storms[1]
+    @test s1.dst_min == -150.0
+    @test s1.start_idx <= 24       # SSC discovered before the trigger at hour 24
+    @test s1.min_idx == 26
+    @test s1.end_idx >= s1.min_idx
+
+    # The secondary storm must not start at or before the first storm's end.
+    s2 = storms[2]
+    @test s2.start_idx > s1.end_idx
+    @test s2.dst_min == -110.0
+end
+
 @testset "Dst [ERRORS]" begin
     SpaceIndices.init(SpaceIndices.Celestrak)
     SpaceIndices.init(SpaceIndices.Dst)
