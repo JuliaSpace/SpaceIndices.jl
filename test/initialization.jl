@@ -38,25 +38,8 @@
     @test SpaceIndices._OPDATA_DST.data       isa Nothing
     SpaceIndices.destroy()
 
-    # == Dst individual init (requires an ap source) =======================================
-
-    # Dst with Celestrak ap (default).
-    SpaceIndices.init(SpaceIndices.Celestrak)
     SpaceIndices.init(SpaceIndices.Dst)
     @test SpaceIndices._OPDATA_DST.data       isa SpaceIndices.Dst
-    @test SpaceIndices._OPDATA_CELESTRAK.data isa SpaceIndices.Celestrak
-    SpaceIndices.destroy()
-
-    # Dst with Hpo ap.
-    SpaceIndices.init(SpaceIndices.Hpo)
-    SpaceIndices.init(SpaceIndices.Dst; ap_source = :hpo)
-    @test SpaceIndices._OPDATA_DST.data isa SpaceIndices.Dst
-    @test SpaceIndices._OPDATA_HPO.data isa SpaceIndices.Hpo
-    SpaceIndices.destroy()
-
-    # Invalid ap_source should throw.
-    SpaceIndices.init(SpaceIndices.Celestrak)
-    @test_throws ArgumentError SpaceIndices.init(SpaceIndices.Dst; ap_source = :invalid)
     SpaceIndices.destroy()
 
     # == Blocklist =========================================================================
@@ -82,7 +65,6 @@
     @test SpaceIndices._OPDATA_HPO.data       isa SpaceIndices.Hpo
     @test SpaceIndices._OPDATA_DST.data       isa Nothing
     SpaceIndices.destroy()
-
 end
 
 @testset "Initialize Indices Using Local Files" begin

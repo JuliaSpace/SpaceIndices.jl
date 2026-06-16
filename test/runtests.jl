@@ -34,7 +34,6 @@ const _INDICES = [
     :Ap30
     :Ap60
     :Dst
-    :DTC_Dst
 ]
 
 if isempty(VERSION.prerelease)

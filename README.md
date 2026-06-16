@@ -51,7 +51,6 @@ Those sets provide the following indices:
 |                     | `Hp60`                | Geomagnetic index with 60-minute resolution                        |                     |
 |                     | `ap60`                | Linear geomagnetic activity index (60-minute)                      |                     |
 | `Dst`               | `Dst`                 | Disturbance Storm Time index (hourly)                              | nT                  |
-|                     | `DTC_Dst`             | Exospheric temperature variation from Dst (DTCMAKEDR algorithm)    | K                   |
 
 ## Installation
 
