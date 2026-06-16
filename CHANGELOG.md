@@ -1,6 +1,15 @@
 SpaceIndices.jl Changelog
 =========================
 
+Version 2.1.1
+-------------
+
+- ![Info][badge-info]: We are removing the DTC index that was built using the Dst data. Up
+  to know, we do not know the license of the file DTCMAKEDR_AUTO.f provided by SET. When we
+  obtain the license, we might revisit this decision. We are treating this removal as a bug
+  fix.
+- ![Enhancement][badge-enhancement] The algorithm to parse the Dst files were improved.
+
 Version 2.1.0
 -------------
 
