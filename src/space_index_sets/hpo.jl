@@ -127,8 +127,8 @@ const AP_VALUES = [
 
 function urls(::Type{Hpo})
     return [
-        "https://kp.gfz.de/fileadmin/files_for_gfz_cms/Hp30_ap30_complete_series.txt",
-        "https://kp.gfz.de/fileadmin/files_for_gfz_cms/Hp60_ap60_complete_series.txt",
+        "https://kp.gfz.de/app/files/Hp30_ap30_complete_series.txt",
+        "https://kp.gfz.de/app/files/Hp60_ap60_complete_series.txt",
         "https://isdc-data.gfz.de/geomagnetism/HpoForecast/v0102/output/Hpo/json/hpo_forecast_mean_bars_Hp30.json",
         "https://isdc-data.gfz.de/geomagnetism/HpoForecast/v0102/output/Hpo/json/hpo_forecast_mean_bars_Hp60.json"
     ]
