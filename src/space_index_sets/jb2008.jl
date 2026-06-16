@@ -41,7 +41,7 @@ urls(::Type{JB2008}) = [
 
 expiry_periods(::Type{JB2008}) = [Day(1), Day(1)]
 
-function parse_files(::Type{JB2008}, filepaths::Vector{String})
+function parse_files(::Type{JB2008}, filepaths::Vector{String}; kwargs...)
     vdatetime, vdtc = _parse_dtcfile(filepaths |> first)
     vdate, vf10, vf81a, vs10, vs81a, vm10, vm81a, vy10, vy81a = _parse_solfsmy(filepaths |> last)
 

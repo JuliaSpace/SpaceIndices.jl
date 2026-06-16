@@ -38,7 +38,7 @@ end
 
 expiry_periods(::Type{Celestrak}) = [Day(1)]
 
-function parse_files(::Type{Celestrak}, filepaths::Vector{String})
+function parse_files(::Type{Celestrak}, filepaths::Vector{String}; kwargs...)
     # We only have one file here.
     filepath = first(filepaths)
 

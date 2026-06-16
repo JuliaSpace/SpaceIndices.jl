@@ -136,7 +136,7 @@ end
 
 expiry_periods(::Type{Hpo}) = [Day(1), Day(1), Day(1), Day(1)]
 
-function parse_files(::Type{Hpo}, filepaths::Vector{String})
+function parse_files(::Type{Hpo}, filepaths::Vector{String}; kwargs...)
     length(filepaths) == 4 || error("We need exactly 4 files to parse the Hpo index set.")
 
     # Parse the Hp30 historical file (complete record since 1985).
