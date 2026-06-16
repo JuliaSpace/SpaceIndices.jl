@@ -126,7 +126,7 @@ function filenames(::Type{Dst})
 
     for year in _DST_PROV_START_YEAR:last_prov_year
         for month in 1:12
-            ((year == last_prov_year) && (month == last_prov_month)) && break
+            ((year == last_prov_year) && (month > last_prov_month)) && break
 
             push!(vfilenames, "dst_prov_$(year)_$(lpad(month, 2, '0')).html")
         end
@@ -138,7 +138,7 @@ function filenames(::Type{Dst})
         start_month = (year == last_prov_year) ? last_prov_month + 1 : 1
 
         for month in start_month:12
-            ((year == current_year) && (month == current_month)) && break
+            ((year == current_year) && (month > current_month)) && break
             push!(vfilenames, "dst_realtime_$(year)_$(lpad(month, 2, '0')).html")
         end
     end
@@ -349,11 +349,9 @@ Parse the Dst HTML file `filepath` from the Kyoto WDC and append the hourly Juli
 `vjd` and the corresponding Dst values to `vdst`.
 
 The Kyoto WDC HTML pages embed Dst data in a `<pre>` block with one line per day. Each data
-line contains a day number followed by 24 hourly values. Adjacent negative values can be
-packed without spaces (e.g. `-235-217-225`), so the function uses a regex to extract all
-integers from each line and treats lines with up to 25 integers (1 day + 24 values) as data.
-The fill value `9999`, used by Kyoto for hours that are not yet available in real-time data,
-is ignored.
+line contains a day number followed by 24 hourly values, each in a fixed-width 4-character
+field. The fill value `9999`, used by Kyoto for hours that are not yet available in real-time
+data, is ignored.
 """
 function _parse_dst_html!(vjd::Vector{Float64}, vdst::Vector{Float64}, filepath::String)
     content = read(filepath, String)
@@ -384,36 +382,40 @@ function _parse_dst_html!(vjd::Vector{Float64}, vdst::Vector{Float64}, filepath:
         # Skip lines until we have a valid year and month.
         (year == 0 || month == 0) && continue
 
-        # Match all integers (positive and negative) in the line.
-        # A complete DST data line has 25 integers: 1 day + 24 hourly values.
-        # Partial lines (e.g. current day in real-time data) may have fewer because
-        # Kyoto fills not-yet-available hours with 9999 which can merge with adjacent
-        # values in the fixed-width format.
-        int_matches = collect(eachmatch(r"-?\d+", clean))
-        (2 <= length(int_matches) <= 25) || continue
+        # Parse the day number from the start of the line. The Kyoto `<pre>` block uses a
+        # fixed-width format: the day field is right-justified (leading spaces + 1–2 digits
+        # + space) and is immediately followed by 24 hourly Dst values, each in a
+        # 4-character field. A generic integer regex would mis-tokenise sequences like "
+        # -129999", where the space-padded negative value " -12" (4 chars) and the fill
+        # value "9999" (4 chars) are stored back-to-back without a separator.
+        m_day = match(r"^\s*(\d{1,2})\s", clean)
+        isnothing(m_day) && continue
 
-        try
-            day = parse(Int, int_matches[1].match)
-            (1 <= day <= 31) || continue
+        day = tryparse(Int, m_day.captures[1]::SubString{String})
+        (isnothing(day) || !(1 <= day <= 31)) && continue
+        day > Dates.daysinmonth(year, month) && continue
 
-            # Validate the date against the calendar.
-            day > Dates.daysinmonth(year, month) && continue
+        # Everything after the day field (whose byte-length equals ncodeunits(m_day.match))
+        # consists of consecutive 4-character hourly value fields.
+        data = clean[(m_day.offset + ncodeunits(m_day.match)):end]
 
-            n_hours = min(length(int_matches) - 1, 24)
-            for h in 0:(n_hours - 1)
-                dst_val = parse(Float64, int_matches[h + 2].match)
+        for h in 0:23
+            # We need to account for a spurious extra space that appears after the 8th and
+            # 16th hourly values.
+            fstart = 4h + 1 + (h >= 8 ? 1 : 0) + (h >= 16 ? 1 : 0)
+            fend   = fstart + 3
+            fend > ncodeunits(data) && break
 
-                # Kyoto real-time pages use 9999 as a fill value for hours not yet
-                # available. Skip any value with |Dst| >= 9999 (real Dst never exceeds
-                # a few hundred nT).
-                abs(dst_val) >= 9999.0 && continue
+            dst_val = tryparse(Float64, data[fstart:fend])
+            isnothing(dst_val) && continue
 
-                jd = datetime2julian(DateTime(year, month, day, h, 0, 0))
-                push!(vjd,  jd)
-                push!(vdst, dst_val)
-            end
-        catch
-            continue
+            # Kyoto uses 9999 as fill for hours not yet available; real Dst never
+            # exceeds a few hundred nT so any |value| >= 9999 is invalid.
+            abs(dst_val) >= 9999.0 && continue
+
+            jd = datetime2julian(DateTime(year, month, day, h, 0, 0))
+            push!(vjd,  jd)
+            push!(vdst, dst_val)
         end
     end
 end
