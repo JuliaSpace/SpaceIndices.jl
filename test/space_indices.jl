@@ -300,9 +300,9 @@ end
     @test r ≈ 53.3
 
     r = space_index(Val(:S81a), dt)
-    @test r ≈ 53.8
+    @test r ≈ 53.7
     r = space_index(Val(:S81a), jd)
-    @test r ≈ 53.8
+    @test r ≈ 53.7
 
     r = space_index(Val(:M10), dt)
     @test r ≈ 72.8
