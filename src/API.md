@@ -20,7 +20,7 @@ We must define the following functions for every space index set defined as in t
 section.
 
 ```julia
-function SpaceIndices.urls(::Type{T}) where T<:SpaceIndexFile -> Vector{String}
+function SpaceIndices.urls(::Type{T}) where T<:SpaceIndexSet -> Vector{String}
 ```
 
 This function must return a `Vector{String}` with the URLs to download the files for the
@@ -33,7 +33,7 @@ SpaceIndices.urls(::Type{MySpaceIndex}) = ["https://url.for.my/space.file.txt"]
 ---
 
 ```julia
-function SpaceIndices.expiry_periods(::Type{T}) where T<:SpaceIndexFile -> Vector{DatePeriod}
+function SpaceIndices.expiry_periods(::Type{T}) where T<:SpaceIndexSet -> Vector{DatePeriod}
 ```
 
 This function must return the list with the expiry periods for the files in the space index
@@ -47,7 +47,7 @@ SpaceIndices.expiry_periods(::Type{MySpaceIndex}) = [Day(7)]
 ---
 
 ```julia
-SpaceIndices.parse_files(::Type{T}, filepaths::Vector{String}; kwargs...) where T<:SpaceIndexFile -> T
+SpaceIndices.parse_files(::Type{T}, filepaths::Vector{String}; kwargs...) where T<:SpaceIndexSet -> T
 ```
 
 This function must parse the files related to the space index set `T` using the files in
@@ -93,7 +93,7 @@ the no- argument `init()`. Sets that return `false` must be initialized explicit
 ---
 
 ```julia
-function SpaceIndices.filenames(::Type{T}) where T<:SpaceIndexFile -> Vector{String}
+function SpaceIndices.filenames(::Type{T}) where T<:SpaceIndexSet -> Vector{String}
 ```
 
 This function can return a `Vector{String}` with the names of the remote files. The system

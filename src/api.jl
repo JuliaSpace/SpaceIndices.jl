@@ -97,10 +97,11 @@ will be downloaded again.
 expiry_periods
 
 """
-    filenames(::Type{T}) where T<:SpaceIndexSet -> Vector{String}
+    filenames(::Type{T}) where T<:SpaceIndexSet -> Union{Nothing, Vector{String}}
 
 Return the filenames for the remote files associated with the space index set `T`. If this
-function is not defined for `T`, the filenames will be obtained based on the URLs.
+function is not defined for `T`, it returns `nothing` and the filenames will be obtained
+based on the URLs.
 """
 filenames(::Type{T}) where T<:SpaceIndexSet = nothing
 
@@ -115,9 +116,9 @@ urls
     space_index(::Val{:index}, jd::Number; kwargs...) -> Number
     space_index(::Val{:index}, date::DateTime; kwargs...) -> Number
 
-Get the space `index` for the Julian day `jd` or the `instant`. The latter must be an object
-of type `DateTime`. `kwargs...` can be used to pass additional configuration for the space
-index.
+Get the space `index` for the Julian day `jd` or the instant `date` (UTC). The latter must
+be an object of type `DateTime`. `kwargs...` can be used to pass additional configuration
+for the space index.
 """
 space_index
 

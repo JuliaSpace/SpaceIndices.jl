@@ -65,7 +65,8 @@ end
 """
     space_index(::Val{:DTC}, date::Number) -> Float64
 
-Get the exospheric temperature variation [K] caused by the Dst index at `instant` (UTC).
+Get the exospheric temperature variation [K] caused by the Dst index at the Julian day
+`date` (UTC).
 """
 function space_index(::Val{:DTC}, date::Number)
     obj    = @object(JB2008)
@@ -77,7 +78,8 @@ end
 """
     space_index(::Val{:S10}, date::Number) -> Float64
 
-Get the EUV index (26-34 nm) scaled to F10.7 [10⁻²² W / (M² ⋅ Hz)] for the `instant` (UTC).
+Get the EUV index (26-34 nm) scaled to F10.7 [10⁻²² W / (m² ⋅ Hz)] for the Julian day
+`date` (UTC).
 """
 function space_index(::Val{:S10}, date::Number)
     obj    = @object(JB2008)
@@ -89,8 +91,8 @@ end
 """
     space_index(::Val{:S81a}, date::Number) -> Float64
 
-Get the 81-day averaged EUV index (26-34 nm) scaled to F10.7 [10⁻²² W / (M² ⋅ Hz)] for the
-`instant` (UTC).
+Get the 81-day averaged EUV index (26-34 nm) scaled to F10.7 [10⁻²² W / (m² ⋅ Hz)] for the
+Julian day `date` (UTC).
 """
 function space_index(::Val{:S81a}, date::Number)
     obj    = @object(JB2008)
@@ -100,9 +102,9 @@ function space_index(::Val{:S81a}, date::Number)
 end
 
 """
-    get_space_index(::Val{:M10}, date::Number) -> Float64
+    space_index(::Val{:M10}, date::Number) -> Float64
 
-Get the MG2 index scaled to F10.7 [10⁻²² W / (M² ⋅ Hz)] for the `instant` (UTC).
+Get the MG2 index scaled to F10.7 [10⁻²² W / (m² ⋅ Hz)] for the Julian day `date` (UTC).
 """
 function space_index(::Val{:M10}, date::Number)
     obj    = @object(JB2008)
@@ -114,8 +116,8 @@ end
 """
     space_index(::Val{:M81a}, date::Number) -> Float64
 
-Get the 81-day averaged MG2 index scaled to F10.7 [10⁻²² W / (M² ⋅ Hz)] for the `instant`
-(UTC).
+Get the 81-day averaged MG2 index scaled to F10.7 [10⁻²² W / (m² ⋅ Hz)] for the Julian day
+`date` (UTC).
 """
 function space_index(::Val{:M81a}, date::Number)
     obj    = @object(JB2008)
@@ -127,8 +129,8 @@ end
 """
     space_index(::Val{:Y10}, date::Number) -> Float64
 
-Get the solar X-ray & Lya index scaled to F10.7 [10⁻²² W / (M² ⋅ Hz)] for the `instant`
-(UTC).
+Get the solar X-ray & Lya index scaled to F10.7 [10⁻²² W / (m² ⋅ Hz)] for the Julian day
+`date` (UTC).
 """
 function space_index(::Val{:Y10}, date::Number)
     obj    = @object(JB2008)
@@ -140,8 +142,8 @@ end
 """
     space_index(::Val{:Y81a}, date::Number) -> Float64
 
-Get the 81-day averaged solar X-ray & Lya index scaled to F10.7 [10⁻²² W / (M² ⋅ Hz)] for
-the `instant` (UTC).
+Get the 81-day averaged solar X-ray & Lya index scaled to F10.7 [10⁻²² W / (m² ⋅ Hz)] for
+the Julian day `date` (UTC).
 """
 function space_index(::Val{:Y81a}, date::Number)
     obj    = @object(JB2008)

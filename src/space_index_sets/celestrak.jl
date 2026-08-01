@@ -186,9 +186,9 @@ end
 @register Celestrak
 
 """
-    space_index(::Val{:BSRN}, jd::Number) -> Int64
+    space_index(::Val{:BSRN}, jd::Number) -> Float64
 
-Get the BSRN index for the day at `instant`
+Get the Bartels Solar Rotation Number (BSRN) for the day at the Julian day `jd` (UTC).
 """
 function space_index(::Val{:BSRN}, jd::Number)
     obj    = @object(Celestrak)
@@ -198,9 +198,10 @@ function space_index(::Val{:BSRN}, jd::Number)
 end
 
 """
-    space_index(::Val{:ND}, jd::Number) -> Int64
+    space_index(::Val{:ND}, jd::Number) -> Float64
 
-Get the ND index for the day at `instant`
+Get the number of the day within the Bartels 27-day cycle (ND) for the day at the Julian
+day `jd` (UTC).
 """
 function space_index(::Val{:ND}, jd::Number)
     obj    = @object(Celestrak)
@@ -212,7 +213,7 @@ end
 """
     space_index(::Val{:Kp}, jd::Number) -> NTuple{8, Float64}
 
-Get the Kp index for the day at `instant` compute every three hours.
+Get the Kp index for the day at the Julian day `jd` (UTC), computed every three hours.
 """
 function space_index(::Val{:Kp}, jd::Number)
     obj    = @object(Celestrak)
@@ -224,7 +225,7 @@ end
 """
     space_index(::Val{:Ap}, jd::Number) -> NTuple{8, Float64}
 
-Get the Ap index for the day at `instant` compute every three hours.
+Get the Ap index for the day at the Julian day `jd` (UTC), computed every three hours.
 """
 function space_index(::Val{:Ap}, jd::Number)
     obj    = @object(Celestrak)
@@ -236,7 +237,7 @@ end
 """
     space_index(::Val{:Cp}, jd::Number) -> Float64
 
-Get the Cp index for the day at `instant`
+Get the Cp index for the day at the Julian day `jd` (UTC).
 """
 function space_index(::Val{:Cp}, jd::Number)
     obj    = @object(Celestrak)
@@ -248,7 +249,7 @@ end
 """
     space_index(::Val{:C9}, jd::Number) -> Float64
 
-Get the C9 index for the day at `instant`
+Get the C9 index for the day at the Julian day `jd` (UTC).
 """
 function space_index(::Val{:C9}, jd::Number)
     obj    = @object(Celestrak)
@@ -258,9 +259,9 @@ function space_index(::Val{:C9}, jd::Number)
 end
 
 """
-    space_index(::Val{:ISN}, jd::Number) -> Int64
+    space_index(::Val{:ISN}, jd::Number) -> Float64
 
-Get the ISN index for the day at `instant`
+Get the International Sunspot Number (ISN) for the day at the Julian day `jd` (UTC).
 """
 function space_index(::Val{:ISN}, jd::Number)
     obj    = @object(Celestrak)
@@ -270,9 +271,9 @@ function space_index(::Val{:ISN}, jd::Number)
 end
 
 """
-    space_index(::Val{:Ap_daily}, jd::Number) -> Int64
+    space_index(::Val{:Ap_daily}, jd::Number) -> Float64
 
-Get the daily Ap index for the day at `instant`.
+Get the daily Ap index for the day at the Julian day `jd` (UTC).
 """
 function space_index(::Val{:Ap_daily}, jd::Number)
     obj    = @object(Celestrak)
@@ -284,7 +285,7 @@ end
 """
     space_index(::Val{:Kp_daily}, jd::Number) -> Float64
 
-Get the daily Kp index for the day at `instant`.
+Get the daily Kp index for the day at the Julian day `jd` (UTC).
 """
 function space_index(::Val{:Kp_daily}, jd::Number)
     obj    = @object(Celestrak)
@@ -299,8 +300,8 @@ end
 """
     space_index(::Val{:F10obs}, jd::Number) -> Float64
 
-Get the observed F10.7 index (10.7-cm solar flux) [10⁻²² W / (M² ⋅ Hz)] for the `instant`
-(UTC).
+Get the observed F10.7 index (10.7-cm solar flux) [10⁻²² W / (m² ⋅ Hz)] at the Julian day
+`jd` (UTC).
 """
 function space_index(::Val{:F10obs}, jd::Number)
     obj    = @object(Celestrak)
@@ -315,8 +316,8 @@ end
 """
     space_index(::Val{:F10adj}, jd::Number) -> Float64
 
-Get the adjusted F10.7 index (10.7-cm solar flux) [10⁻²² W / (M² ⋅ Hz)] for the `instant`
-(UTC).
+Get the adjusted F10.7 index (10.7-cm solar flux) [10⁻²² W / (m² ⋅ Hz)] at the Julian day
+`jd` (UTC).
 """
 function space_index(::Val{:F10adj}, jd::Number)
     obj    = @object(Celestrak)
@@ -331,8 +332,8 @@ end
 """
     space_index(::Val{:F10obs_avg_center81}, jd::Number) -> Float64
 
-Get the observed F10.7 index (10.7-cm solar flux) [10⁻²² W / (M² ⋅ Hz)] averaged over 81
-days centered for the `instant` (UTC).
+Get the observed F10.7 index (10.7-cm solar flux) [10⁻²² W / (m² ⋅ Hz)] averaged over 81
+days centered at the Julian day `jd` (UTC).
 """
 function space_index(::Val{:F10obs_avg_center81}, jd::Number)
     obj    = @object(Celestrak)
@@ -347,8 +348,8 @@ end
 """
     space_index(::Val{:F10obs_avg_last81}, jd::Number) -> Float64
 
-Get the observed F10.7 index (10.7-cm solar flux) [10⁻²² W / (M² ⋅ Hz)] averaged over the
-last 81 days from the `instant` (UTC).
+Get the observed F10.7 index (10.7-cm solar flux) [10⁻²² W / (m² ⋅ Hz)] averaged over the
+last 81 days from the Julian day `jd` (UTC).
 """
 function space_index(::Val{:F10obs_avg_last81}, jd::Number)
     obj      = @object(Celestrak)
@@ -363,8 +364,8 @@ end
 """
     space_index(::Val{:F10adj_avg_center81}, jd::Number) -> Float64
 
-Get the adjusted F10.7 index (10.7-cm solar flux) [10⁻²² W / (M² ⋅ Hz)] averaged over 81
-days centered for the `instant` (UTC).
+Get the adjusted F10.7 index (10.7-cm solar flux) [10⁻²² W / (m² ⋅ Hz)] averaged over 81
+days centered at the Julian day `jd` (UTC).
 """
 function space_index(::Val{:F10adj_avg_center81}, jd::Number)
     obj      = @object(Celestrak)
@@ -379,8 +380,8 @@ end
 """
     space_index(::Val{:F10adj_avg_last81}, jd::Number) -> Float64
 
-Get the adjusted F10.7 index (10.7-cm solar flux) [10⁻²² W / (M² ⋅ Hz)] averaged over the
-last 81 days from the `instant` (UTC).
+Get the adjusted F10.7 index (10.7-cm solar flux) [10⁻²² W / (m² ⋅ Hz)] averaged over the
+last 81 days from the Julian day `jd` (UTC).
 """
 function space_index(::Val{:F10adj_avg_last81}, jd::Number)
     obj      = @object(Celestrak)

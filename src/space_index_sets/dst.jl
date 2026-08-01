@@ -219,11 +219,8 @@ Get the Dst (Disturbance Storm Time) index [nT] at the Julian Day `jd`.
 
 The Dst index measures the intensity of the globally symmetric part of the equatorial
 ring current. Negative values indicate geomagnetic storms. Values are linearly
-interpolated between hourly observations.
-
-For times beyond the last available observation, the Dst series is extended with quiet-time
-values (0 nT) so that any in-progress storm recovery completes naturally through the dTc
-integral.
+interpolated between hourly observations. The function throws an `ArgumentError` if `jd`
+is outside the interval of the available observations.
 
 # Reference
 

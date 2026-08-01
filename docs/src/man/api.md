@@ -25,7 +25,7 @@ We must define the following functions for every space index set defined as in t
 section.
 
 ```julia
-function SpaceIndices.urls(::Type{T}) where T<:SpaceIndexFile -> Vector{String}
+function SpaceIndices.urls(::Type{T}) where T<:SpaceIndexSet -> Vector{String}
 ```
 
 This function must return a `Vector{String}` with the URLs to download the files for the
@@ -38,7 +38,7 @@ SpaceIndices.urls(::Type{MySpaceIndex}) = ["https://url.for.my/space.file.txt"]
 ---
 
 ```julia
-function SpaceIndices.expiry_periods(::Type{T}) where T<:SpaceIndexFile -> Vector{DatePeriod}
+function SpaceIndices.expiry_periods(::Type{T}) where T<:SpaceIndexSet -> Vector{DatePeriod}
 ```
 
 This function must return the list with the expiry periods for the files in the space index
@@ -52,7 +52,7 @@ get_filenames(::Type{MySpaceIndex}) = [Day(7)]
 ---
 
 ```julia
-SpaceIndices.parse_files(::Type{T}, filepaths::Vector{String}) where T<:SpaceIndexFile -> T
+SpaceIndices.parse_files(::Type{T}, filepaths::Vector{String}) where T<:SpaceIndexSet -> T
 ```
 
 This function must parse the files related to the space index set `T` using the files in
@@ -83,7 +83,7 @@ where the space `index` for the `instant` will be returned.
 ## Optional API Functions
 
 ```julia
-function SpaceIndices.filenames(::Type{T}) where T<:SpaceIndexFile -> Vector{String}
+function SpaceIndices.filenames(::Type{T}) where T<:SpaceIndexSet -> Vector{String}
 ```
 
 This function can return a `Vector{String}` with the names of the remote files. The system
@@ -141,7 +141,7 @@ We also need to overload the API functions:
 SpaceIndices.urls(::Type{LeapSeconds}) = ["https://ronanarraes.com/space-indices/leap_seconds.csv"]
 SpaceIndices.expiry_periods(::Type{LeapSeconds}) = [Day(365)]
 
-function SpaceIndices.parse_file(::Type{LeapSeconds}, filepaths::Vector{String})
+function SpaceIndices.parse_files(::Type{LeapSeconds}, filepaths::Vector{String})
     filepath = first(filepaths)
     raw_data, ~ = readdlm(filepath, ';'; header = true)
     return LeapSeconds(raw_data[:, 1], raw_data[:, 2])
