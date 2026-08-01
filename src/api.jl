@@ -11,13 +11,20 @@ export space_index
 ############################################################################################
 
 """
+    _data_handler_symbol(T) -> Symbol
+
+Return the name of the optional data handler associated with the space index set `T`.
+"""
+_data_handler_symbol(T) = Symbol("_OPDATA_", uppercase(string(T)))
+
+"""
     @data_handler(T)
 
 Return the optional data handler associated with space index set `T`. This variable stores
 an instance of `T` if the set was already initialized.
 """
 macro data_handler(T)
-    return esc(:("_" * "OPDATA_" * uppercase(string(T)) |> Symbol))
+    return esc(_data_handler_symbol(T))
 end
 
 """
@@ -30,7 +37,7 @@ Return the object associated with the space index set `T`.
 - `Error`: If the space index `T` was not initialized.
 """
 macro object(T)
-    object_data_handler = @data_handler($T)
+    object_data_handler = _data_handler_symbol(T)
 
     ex = quote
         isavailable($object_data_handler) || error(
@@ -51,7 +58,7 @@ Register the the space index set `T`. This macro push the data into the global v
 space files and also creates the optional data handler for the processed structure.
 """
 macro register(T)
-    opdata_handler = @data_handler(T)
+    opdata_handler = _data_handler_symbol(T)
 
     ex = quote
         @OptionalData(
