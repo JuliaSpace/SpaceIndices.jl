@@ -35,6 +35,16 @@ const _DST_FINAL_START_YEAR = 1957
 const _DST_FINAL_END_YEAR   = 2020
 const _DST_PROV_START_YEAR  = 2021
 
+# Cache with the latest provisional month obtained from the remote server. The first
+# element is the instant in which the information was obtained, and the second is the
+# result. This cache avoids probing the remote server multiple times during the same
+# initialization, since `filenames`, `urls`, and `expiry_periods` are all called when
+# initializing the Dst space index set. It also guarantees that those functions see a
+# consistent file list.
+const _DST_PROV_MONTH_CACHE_VALIDITY = Minute(15)
+const _DST_PROV_MONTH_CACHE =
+    Ref{Tuple{DateTime, Union{Nothing, Tuple{Int, Int}}}}((DateTime(0), nothing))
+
 # Month name lookup for parsing the header in DST HTML pages.
 const _DST_MONTH_NAMES = Dict{String, Int}(
     "JANUARY"   => 1,
@@ -233,6 +243,34 @@ end
 """
     _get_latest_month_with_provisional_data() -> Union{Tuple{Int, Int}, Nothing}
 
+Return the latest year and month for which Kyoto WDC has published provisional Dst data.
+
+The result is obtained with [`_probe_latest_month_with_provisional_data`](@ref) and cached
+for `_DST_PROV_MONTH_CACHE_VALIDITY`. Hence, the functions `filenames`, `urls`, and
+`expiry_periods`, which are all called when initializing the Dst space index set, probe the
+remote server only once and see a consistent file list.
+
+# Returns
+
+- `Union{Tuple{Int, Int}, Nothing}`: Tuple `(year, month)` with the latest provisional
+    month, or `nothing` if no provisional month could be determined.
+"""
+function _get_latest_month_with_provisional_data()
+    cache_instant, cache_value = _DST_PROV_MONTH_CACHE[]
+
+    if now() - cache_instant <= _DST_PROV_MONTH_CACHE_VALIDITY
+        return cache_value
+    end
+
+    r = _probe_latest_month_with_provisional_data()
+    _DST_PROV_MONTH_CACHE[] = (now(), r)
+
+    return r
+end
+
+"""
+    _probe_latest_month_with_provisional_data() -> Union{Tuple{Int, Int}, Nothing}
+
 Determine the latest year and month for which Kyoto WDC has published provisional Dst
 data. The function first downloads the index page
 `https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/` to a temporary file and scans it for
@@ -248,7 +286,7 @@ downloads successfully.
 - `Union{Tuple{Int, Int}, Nothing}`: Tuple `(year, month)` with the latest provisional
     month, or `nothing` if no provisional month could be determined.
 """
-function _get_latest_month_with_provisional_data()
+function _probe_latest_month_with_provisional_data()
     url = "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/"
     filepath = tempname() * ".html"
 
