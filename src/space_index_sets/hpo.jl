@@ -156,8 +156,10 @@ function parse_files(::Type{Hpo}, filepaths::Vector{String}; kwargs...)
     # Parse the Hp60 forecast JSON file (3-day nowcast + 3-day forecast).
     vjd_hp60_fc, vhp60_fc, vap60_fc = _parse_hpo_forecast_json(filepaths[4], 24)
 
-    # Merge historical and forecast data
-    # Only append forecast data that extends beyond historical data
+    # Merge historical and forecast data. Only append forecast data that extends beyond
+    # historical data. Since all fields share the same date vector, we can only append days
+    # that are present in both forecast files. Hence, we match the Hp30 and Hp60 forecast
+    # days by their Julian dates instead of assuming both files have the same date range.
     vjd_final = copy(vjd_hp30)
     vhp30_final = copy(vhp30)
     vap30_final = copy(vap30)
@@ -166,14 +168,23 @@ function parse_files(::Type{Hpo}, filepaths::Vector{String}; kwargs...)
 
     last_historical_jd = isempty(vjd_hp30) ? -Inf : vjd_hp30[end]
 
+    hp60_fc_indices = Dict{Float64, Int}(jd => i for (i, jd) in enumerate(vjd_hp60_fc))
+
     for (i, jd) in enumerate(vjd_hp30_fc)
-        if jd > last_historical_jd
-            push!(vjd_final, jd)
-            push!(vhp30_final, vhp30_fc[i])
-            push!(vap30_final, vap30_fc[i])
-            push!(vhp60_final, vhp60_fc[i])
-            push!(vap60_final, vap60_fc[i])
+        jd > last_historical_jd || continue
+
+        j = get(hp60_fc_indices, jd, nothing)
+
+        if isnothing(j)
+            @debug "The forecast day $jd is not present in the Hp60 forecast file. Skipping it."
+            continue
         end
+
+        push!(vjd_final, jd)
+        push!(vhp30_final, vhp30_fc[i])
+        push!(vap30_final, vap30_fc[i])
+        push!(vhp60_final, vhp60_fc[j])
+        push!(vap60_final, vap60_fc[j])
     end
 
     return Hpo(vjd_final, vhp30_final, vap30_final, vhp60_final, vap60_final)
