@@ -59,82 +59,108 @@ function parse_files(::Type{Celestrak}, filepaths::Vector{String}; kwargs...)
     vf107_adj_avg_center81 = Float64[]
     vf107_adj_avg_last81 = Float64[]
 
-    # Store the latest processed day.
-    jd_k_1 = datetime2julian(DateTime(0, 1, 1))
+    open(filepath, "r") do file
+        # Skip the header line.
+        readline(file)
 
-    file = readdlm(filepath, ','; skipstart=1)::Matrix{Any}
+        line_num = 1
 
-    for i in 1:size(file)[1]
+        for line in eachline(file)
+            line_num += 1
 
-        # The Julian day of the data will be computed at noon to allow using the
-        # nearest-neighbor algorithm in the interpolations.
-        date_str = split(file[i, 1], '-')
-        year   = parse(Int, date_str[1])
-        month  = parse(Int, date_str[2])
-        day    = parse(Int, date_str[3])
-        jd_k = datetime2julian(DateTime(year, month, day))
+            tokens = split(line, ',')
 
-        # If the current data is equal to the last one, it means we have duplicated
-        # information. In this case, always use the latest one.
-        if jd_k == jd_k_1
-            pop!(vjd)
-            pop!(vBSRN)
-            pop!(vND)
-            pop!(vkp)
-            pop!(vap)
-            pop!(vCp)
-            pop!(vC9)
-            pop!(vISN)
-            pop!(vap_daily)
-            pop!(vf107_obs)
-            pop!(vf107_adj)
-            pop!(vf107_obs_avg_center81)
-            pop!(vf107_obs_avg_last81)
-            pop!(vf107_adj_avg_center81)
-            pop!(vf107_adj_avg_last81)
-        end
+            # Skip lines that do not have all the expected columns.
+            if length(tokens) != 31
+                @debug "The line $line_num in the file $(basename(filepath)) could not be parsed."
+                continue
+            end
 
-        jd_k_1 = jd_k
+            # Skip these to simplify parsing, only grab dates with all indices.
+            tokens[27] == "PRM" && continue
 
-        # Skip these to Simplify Parsing, Only Grab Dates with all Indices
-        file[i, 27] == "PRM" && continue
+            # Parse the date, which is in the ISO format `YYYY-MM-DD`.
+            date = tryparse(Date, tokens[1])
 
-        # If we get errors during parsing, we skip this data.
-        try
-            BSRN_k                  = trunc(file[i, 2])
-            ND_k                    = trunc(file[i, 3])
-            kp_k                    = _round_Kp.(NTuple{8}(float(file[i, j]) for j in 4:11))
-            ap_k                    = NTuple{8}(trunc(file[i, j]) for j in 13:20)
-            Cp_k                    = float(file[i, 22])
-            C9_k                    = float(file[i, 23])
-            ISN_k                   = trunc(file[i, 24])
-            ap_daily_k              = trunc(file[i, 21])
-            f107_obs_k              = float(file[i, 25])
-            f107_adj_k              = float(file[i, 26])
-            f107_obs_avg_center81_k = float(file[i, 28])
-            f107_obs_avg_last81_k   = float(file[i, 29])
-            f107_adj_avg_center81_k = float(file[i, 30])
-            f107_adj_avg_last81_k   = float(file[i, 31])
+            if isnothing(date)
+                @debug "The line $line_num in the file $(basename(filepath)) could not be parsed."
+                continue
+            end
 
-            # Notice that if we reach this point, all the parsing happened correctly. Thus,
-            # we can consider that the operation that adds data to the vectors is "atomic".
-            push!(vjd,                    jd_k)
-            push!(vBSRN,                  BSRN_k)
-            push!(vND,                    ND_k)
-            push!(vkp,                    kp_k)
-            push!(vap,                    ap_k)
-            push!(vCp,                    Cp_k)
-            push!(vC9,                    C9_k)
-            push!(vISN,                   ISN_k)
-            push!(vap_daily,              ap_daily_k)
-            push!(vf107_obs,              f107_obs_k)
-            push!(vf107_adj,              f107_adj_k)
-            push!(vf107_obs_avg_center81, f107_obs_avg_center81_k)
-            push!(vf107_obs_avg_last81,   f107_obs_avg_last81_k)
-            push!(vf107_adj_avg_center81, f107_adj_avg_center81_k)
-            push!(vf107_adj_avg_last81,   f107_adj_avg_last81_k)
-        catch
-            @debug "The line $i in the file $(filepaths |> first |> basename) could not be parsed."
+            jd_k = datetime2julian(DateTime(date))
+
+            # If we get errors during parsing, we skip this data.
+            BSRN_k                  = _parse_float(tokens[2])
+            ND_k                    = _parse_float(tokens[3])
+            kp_k                    = _parse_float_ntuple(tokens, 4, Val(8))
+            ap_k                    = _parse_float_ntuple(tokens, 13, Val(8))
+            Cp_k                    = _parse_float(tokens[22])
+            C9_k                    = _parse_float(tokens[23])
+            ISN_k                   = _parse_float(tokens[24])
+            ap_daily_k              = _parse_float(tokens[21])
+            f107_obs_k              = _parse_float(tokens[25])
+            f107_adj_k              = _parse_float(tokens[26])
+            f107_obs_avg_center81_k = _parse_float(tokens[28])
+            f107_obs_avg_last81_k   = _parse_float(tokens[29])
+            f107_adj_avg_center81_k = _parse_float(tokens[30])
+            f107_adj_avg_last81_k   = _parse_float(tokens[31])
+
+            if (
+                isnothing(BSRN_k)                  ||
+                isnothing(ND_k)                    ||
+                isnothing(kp_k)                    ||
+                isnothing(ap_k)                    ||
+                isnothing(Cp_k)                    ||
+                isnothing(C9_k)                    ||
+                isnothing(ISN_k)                   ||
+                isnothing(ap_daily_k)              ||
+                isnothing(f107_obs_k)              ||
+                isnothing(f107_adj_k)              ||
+                isnothing(f107_obs_avg_center81_k) ||
+                isnothing(f107_obs_avg_last81_k)   ||
+                isnothing(f107_adj_avg_center81_k) ||
+                isnothing(f107_adj_avg_last81_k)
+            )
+                @debug "The line $line_num in the file $(basename(filepath)) could not be parsed."
+                continue
+            end
+
+            # If the current date is equal to the last stored one, it means we have
+            # duplicated information. In this case, always use the latest one. Notice that
+            # we compare against the last **stored** day. Hence, we never remove data
+            # related to another day if the previous lines were skipped.
+            if !isempty(vjd) && (vjd[end] == jd_k)
+                vBSRN[end]                  = trunc(BSRN_k)
+                vND[end]                    = trunc(ND_k)
+                vkp[end]                    = _round_Kp.(kp_k)
+                vap[end]                    = trunc.(ap_k)
+                vCp[end]                    = Cp_k
+                vC9[end]                    = C9_k
+                vISN[end]                   = trunc(ISN_k)
+                vap_daily[end]              = trunc(ap_daily_k)
+                vf107_obs[end]              = f107_obs_k
+                vf107_adj[end]              = f107_adj_k
+                vf107_obs_avg_center81[end] = f107_obs_avg_center81_k
+                vf107_obs_avg_last81[end]   = f107_obs_avg_last81_k
+                vf107_adj_avg_center81[end] = f107_adj_avg_center81_k
+                vf107_adj_avg_last81[end]   = f107_adj_avg_last81_k
+            else
+                push!(vjd,                    jd_k)
+                push!(vBSRN,                  trunc(BSRN_k))
+                push!(vND,                    trunc(ND_k))
+                push!(vkp,                    _round_Kp.(kp_k))
+                push!(vap,                    trunc.(ap_k))
+                push!(vCp,                    Cp_k)
+                push!(vC9,                    C9_k)
+                push!(vISN,                   trunc(ISN_k))
+                push!(vap_daily,              trunc(ap_daily_k))
+                push!(vf107_obs,              f107_obs_k)
+                push!(vf107_adj,              f107_adj_k)
+                push!(vf107_obs_avg_center81, f107_obs_avg_center81_k)
+                push!(vf107_obs_avg_last81,   f107_obs_avg_last81_k)
+                push!(vf107_adj_avg_center81, f107_adj_avg_center81_k)
+                push!(vf107_adj_avg_last81,   f107_adj_avg_last81_k)
+            end
         end
     end
 
@@ -369,6 +395,29 @@ end
 ############################################################################################
 #                                    Private Functions
 ############################################################################################
+
+"""
+    _parse_float(token::AbstractString) -> Union{Nothing, Float64}
+
+Parse the `token` as a `Float64`, returning `nothing` if the operation fails.
+"""
+_parse_float(token::AbstractString) = tryparse(Float64, token)
+
+"""
+    _parse_float_ntuple(tokens::Vector{<:AbstractString}, first_index::Int, ::Val{N}) where N -> Union{Nothing, NTuple{N, Float64}}
+
+Parse `N` consecutive elements of `tokens` as `Float64`s, starting at `first_index`. The
+function returns `nothing` if any element cannot be parsed.
+"""
+function _parse_float_ntuple(
+    tokens::Vector{<:AbstractString},
+    first_index::Int,
+    ::Val{N}
+) where N
+    values = ntuple(i -> tryparse(Float64, tokens[first_index + i - 1]), Val(N))
+    any(isnothing, values) && return nothing
+    return map(v -> something(v), values)
+end
 
 """
     _round_Kp(x::Float64)

@@ -1,6 +1,5 @@
 module SpaceIndices
 
-using DelimitedFiles
 using Downloads
 using JSON
 using Reexport
