@@ -141,20 +141,20 @@ function parse_files(::Type{Hpo}, filepaths::Vector{String}; kwargs...)
 
     # Parse the Hp30 historical file (complete record since 1985).
     # Returns: vjd, vhp30 (as NTuple{48}), vap30 (as NTuple{48})
-    vjd_hp30, vhp30, vap30 = _parse_hpo_file_daily(filepaths[1], 48)
+    vjd_hp30, vhp30, vap30 = _parse_hpo_file_daily(filepaths[1], Val(48))
 
     # Parse the Hp60 historical file (complete record since 1985).
     # Returns: vjd, vhp60 (as NTuple{24}), vap60 (as NTuple{24})
-    vjd_hp60, vhp60, vap60 = _parse_hpo_file_daily(filepaths[2], 24)
+    vjd_hp60, vhp60, vap60 = _parse_hpo_file_daily(filepaths[2], Val(24))
 
     # Verify that both files have the same dates
     (vjd_hp30 != vjd_hp60) && error("Hp30 and Hp60 files have different date ranges.")
 
     # Parse the Hp30 forecast JSON file (3-day nowcast + 3-day forecast).
-    vjd_hp30_fc, vhp30_fc, vap30_fc = _parse_hpo_forecast_json(filepaths[3], 48)
+    vjd_hp30_fc, vhp30_fc, vap30_fc = _parse_hpo_forecast_json(filepaths[3], Val(48))
 
     # Parse the Hp60 forecast JSON file (3-day nowcast + 3-day forecast).
-    vjd_hp60_fc, vhp60_fc, vap60_fc = _parse_hpo_forecast_json(filepaths[4], 24)
+    vjd_hp60_fc, vhp60_fc, vap60_fc = _parse_hpo_forecast_json(filepaths[4], Val(24))
 
     # Merge historical and forecast data. Only append forecast data that extends beyond
     # historical data. Since all fields share the same date vector, we can only append days
@@ -256,7 +256,7 @@ end
 #                                    Private Functions                                     #
 ############################################################################################
 
-function _parse_hpo_file_daily(filepath::String, n_per_day::Int)
+function _parse_hpo_file_daily(filepath::String, ::Val{n_per_day}) where n_per_day
     # Dictionary to accumulate data by date
     # Key: (year, month, day), Value: Dict with interval index => (hp, ap)
     daily_data = Dict{Tuple{Int, Int, Int}, Dict{Int, Tuple{Float64, Float64}}}()
@@ -335,8 +335,8 @@ function _parse_hpo_file_daily(filepath::String, n_per_day::Int)
         # Only add days that have at least some valid data
         if any(!isnan, hp_array) && any(!isnan, ap_array)
             push!(vjd, jd)
-            push!(vhp, Tuple(hp_array))
-            push!(vap, Tuple(ap_array))
+            push!(vhp, NTuple{n_per_day, Float64}(hp_array))
+            push!(vap, NTuple{n_per_day, Float64}(ap_array))
         end
     end
 
@@ -372,7 +372,7 @@ function _hp_to_ap(hp::Float64)
     return 0.0
 end
 
-function _parse_hpo_forecast_json(filepath::String, n_per_day::Int)
+function _parse_hpo_forecast_json(filepath::String, ::Val{n_per_day}) where n_per_day
     # Read and parse the JSON file
     json_data = JSON.parsefile(filepath)::Dict{String, Any}
 
@@ -439,8 +439,8 @@ function _parse_hpo_forecast_json(filepath::String, n_per_day::Int)
         # Only add days that have at least some valid data
         if any(!isnan, hp_array)
             push!(vjd, jd)
-            push!(vhp, Tuple(hp_array))
-            push!(vap, Tuple(ap_array))
+            push!(vhp, NTuple{n_per_day, Float64}(hp_array))
+            push!(vap, NTuple{n_per_day, Float64}(ap_array))
         end
     end
 
