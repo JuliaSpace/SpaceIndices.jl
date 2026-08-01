@@ -10,8 +10,8 @@
 Initialize the space index set `T`.
 
 This function will download the remote files associated with the space index set `T` if they
-do not exist or if their expiry period has been elapsed. Aftward, it will parse the files
-and populate the object to be accessed by the function [`space_index`](@ref).
+do not exist or if their expiry period has elapsed. Afterward, it will parse the files and
+populate the object to be accessed by the function [`space_index`](@ref).
 
 # Keywords
 
@@ -47,7 +47,7 @@ function init(
         lf = length(filepaths)
 
         (lu != lf) && error(
-            "We expected $lu files for the space index set $T in the keyword `filepath`. However, $lf files were provided."
+            "We expected $lu files for the space index set $T in the keyword `filepaths`. However, $lf files were provided."
         )
 
         fp = filepaths
@@ -64,8 +64,8 @@ end
 
 Initialize all the registered space index sets.
 
-This function will download the remote files associated to the space index sets if they do
-not exist or if the expiry period has been elapsed. Afterward, it will parse the files and
+This function will download the remote files associated with the space index sets if they
+do not exist or if their expiry period has elapsed. Afterward, it will parse the files and
 populate the objects to be accessed by the function [`space_index`](@ref).
 
 Space index sets where `auto_init(T)` returns `false` (e.g. `Dst`) are always skipped and

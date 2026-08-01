@@ -8,7 +8,7 @@
 # These files contains the Hpo geomagnetic indices from GFZ Helmholtz Centre Potsdam. The
 # Hpo index provides high-cadence geomagnetic activity measurements with 30-minute (Hp30)
 # and 60-minute (Hp60) resolution, similar to the Kp index but with finer temporal
-# granularity. Documentation cna be found at:
+# granularity. Documentation can be found at:
 #
 #     https://www.gfz.de/en/hpo-index
 #

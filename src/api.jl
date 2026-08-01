@@ -54,7 +54,7 @@ end
 """
     @register(T)
 
-Register the the space index set `T`. This macro push the data into the global vector of
+Register the space index set `T`. This macro pushes the data into the global vector of
 space files and also creates the optional data handler for the processed structure.
 """
 macro register(T)

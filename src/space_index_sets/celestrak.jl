@@ -420,9 +420,10 @@ function _parse_float_ntuple(
 end
 
 """
-    _round_Kp(x::Float64)
+    _round_Kp(x::Float64) -> Float64
 
-Celestrak mulitples Kp by 10 and rounds to the nearest integer this puts it back.
+Convert the Kp value `x` back to its original scale. CelesTrak multiplies Kp by 10 and
+rounds it to the nearest integer.
 """
 function _round_Kp(x::Float64)
     return round(round((x / 10.0) * 3) * 1/3; digits=3)
