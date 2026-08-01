@@ -167,7 +167,7 @@ function _parse_dtcfile(filepath::String)
             line_num += 1
 
             # Ignore comments.
-            (ln[1] == '#') && continue
+            startswith(ln, '#') && continue
 
             tokens   = split(ln)
             num_toks = length(tokens)
@@ -218,7 +218,7 @@ function _parse_solfsmy(filepath::String)
             line_num += 1
 
             # Ignore comments.
-            (ln[1] == '#') && continue
+            startswith(ln, '#') && continue
 
             tokens   = split(ln)
             num_toks = length(tokens)
