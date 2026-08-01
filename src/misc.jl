@@ -50,7 +50,7 @@ function update_download_timestamp(filepath::String)
     filepath_timestamp = filepath * "_timestamp"
 
     open(filepath_timestamp, "w") do f
-        write(f, string(now()))
+        return write(f, string(now()))
     end
 
     return nothing

@@ -1,9 +1,9 @@
 using Documenter
 using SpaceIndices
 
-makedocs(
+makedocs(;
     modules = [SpaceIndices],
-    format = Documenter.HTML(
+    format = Documenter.HTML(;
         prettyurls = !("local" in ARGS),
         canonical = "https://juliaspace.github.io/SpaceIndices.jl/stable/",
     ),
@@ -21,7 +21,4 @@ makedocs(
     ],
 )
 
-deploydocs(
-    repo = "github.com/JuliaSpace/SpaceIndices.jl.git",
-    target = "build",
-)
+deploydocs(; repo = "github.com/JuliaSpace/SpaceIndices.jl.git", target = "build")

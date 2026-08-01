@@ -43,20 +43,12 @@ expiry_periods(::Type{JB2008}) = [Day(1), Day(1)]
 
 function parse_files(::Type{JB2008}, filepaths::Vector{String}; kwargs...)
     vdatetime, vdtc = _parse_dtcfile(filepaths |> first)
-    vdate, vf10, vf81a, vs10, vs81a, vm10, vm81a, vy10, vy81a = _parse_solfsmy(filepaths |> last)
+    vdate, vf10, vf81a, vs10, vs81a, vm10, vm81a, vy10, vy81a = _parse_solfsmy(
+        filepaths |> last
+    )
 
     return JB2008(
-        vdatetime,
-        vdtc,
-        vdate,
-        vf10,
-        vf81a,
-        vs10,
-        vs81a,
-        vm10,
-        vm81a,
-        vy10,
-        vy81a,
+        vdatetime, vdtc, vdate, vf10, vf81a, vs10, vs81a, vm10, vm81a, vy10, vy81a
     )
 end
 
@@ -184,14 +176,14 @@ function _parse_dtcfile(filepath::String)
             end
 
             # Compute the Julian day at midnight of the day.
-            year = parse(Int,     tokens[2])
+            year = parse(Int, tokens[2])
             doy  = parse(Float64, tokens[3])
 
             datetime_0h = datetime2julian(DateTime(year, 1, 1, 0, 0, 0) + Day(doy - 1))
             # Parse the data.
-            for k = 1:24
+            for k in 1:24
                 push!(vdatetime, datetime_0h + (k-1)/24.0)
-                push!(vdtc,      parse(Float64, tokens[k + 3]))
+                push!(vdtc, parse(Float64, tokens[k + 3]))
             end
         end
     end
@@ -241,13 +233,13 @@ function _parse_solfsmy(filepath::String)
 
             # Parse data.
             push!(vdate, date)
-            push!(vf10 , parse(Float64, tokens[ 4]))
-            push!(vf81a, parse(Float64, tokens[ 5]))
-            push!(vs10 , parse(Float64, tokens[ 6]))
-            push!(vs81a, parse(Float64, tokens[ 7]))
-            push!(vm10 , parse(Float64, tokens[ 8]))
-            push!(vm81a, parse(Float64, tokens[ 9]))
-            push!(vy10 , parse(Float64, tokens[10]))
+            push!(vf10, parse(Float64, tokens[4]))
+            push!(vf81a, parse(Float64, tokens[5]))
+            push!(vs10, parse(Float64, tokens[6]))
+            push!(vs81a, parse(Float64, tokens[7]))
+            push!(vm10, parse(Float64, tokens[8]))
+            push!(vm81a, parse(Float64, tokens[9]))
+            push!(vy10, parse(Float64, tokens[10]))
             push!(vy81a, parse(Float64, tokens[11]))
         end
     end

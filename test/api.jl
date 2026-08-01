@@ -14,7 +14,8 @@ struct LeapSeconds <: SpaceIndexSet
     leap_seconds::Vector{Float64}
 end
 
-SpaceIndices.urls(::Type{LeapSeconds}) = ["https://ronanarraes.com/space-indices/leap_seconds.csv"]
+SpaceIndices.urls(::Type{LeapSeconds}) =
+    ["https://ronanarraes.com/space-indices/leap_seconds.csv"]
 SpaceIndices.expiry_periods(::Type{LeapSeconds}) = [Day(365)]
 
 function SpaceIndices.parse_files(::Type{LeapSeconds}, filepaths::Vector{String})
@@ -44,7 +45,7 @@ SpaceIndices.@register LeapSeconds
     # Download the file.
     @test_logs (
         :info,
-        "Downloading the file 'leap_seconds.csv' from 'https://ronanarraes.com/space-indices/leap_seconds.csv'..."
+        "Downloading the file 'leap_seconds.csv' from 'https://ronanarraes.com/space-indices/leap_seconds.csv'...",
     ) match_mode = :any SpaceIndices.init(LeapSeconds)
 
     # Test some values.
@@ -63,7 +64,7 @@ SpaceIndices.@register LeapSeconds
     # If we fetch again, we should not download the file.
     @test_logs (
         :debug,
-        "We found a file that is less than 365 days old (timestamp = $timestamp). Hence, we will use it."
+        "We found a file that is less than 365 days old (timestamp = $timestamp). Hence, we will use it.",
     ) min_level = Logging.Debug match_mode = :any SpaceIndices.init(LeapSeconds)
 
     # Test the some data.
@@ -86,7 +87,7 @@ end
 
     @test_logs (
         :debug,
-        "We found a file that is less than 365 days old (timestamp = $new_timestamp). Hence, we will use it."
+        "We found a file that is less than 365 days old (timestamp = $new_timestamp). Hence, we will use it.",
     ) min_level = Logging.Debug match_mode = :any SpaceIndices.init(LeapSeconds)
 
     # Test the some data.
@@ -96,14 +97,14 @@ end
 
     # Now we change the timestamp to be 365 days old. In this case, the file should be
     # downloaded again.
-    new_timestamp  = timestamp - Day(365)
+    new_timestamp = timestamp - Day(365)
     open(file_timestamp, "w") do f
         write(f, string(new_timestamp))
     end
 
     @test_logs (
         :info,
-        "Downloading the file 'leap_seconds.csv' from 'https://ronanarraes.com/space-indices/leap_seconds.csv'..."
+        "Downloading the file 'leap_seconds.csv' from 'https://ronanarraes.com/space-indices/leap_seconds.csv'...",
     ) match_mode = :any SpaceIndices.init(LeapSeconds)
 
     # Test the some data.
@@ -114,7 +115,7 @@ end
     # If we set `force_download = true`, the file must be downloads.
     @test_logs (
         :info,
-        "Downloading the file 'leap_seconds.csv' from 'https://ronanarraes.com/space-indices/leap_seconds.csv'..."
+        "Downloading the file 'leap_seconds.csv' from 'https://ronanarraes.com/space-indices/leap_seconds.csv'...",
     ) match_mode = :any SpaceIndices.init(LeapSeconds, force_download = true)
 
     # Test the some data.
@@ -129,7 +130,7 @@ end
 
     @test_logs (
         :info,
-        "Downloading the file 'leap_seconds.csv' from 'https://ronanarraes.com/space-indices/leap_seconds.csv'..."
+        "Downloading the file 'leap_seconds.csv' from 'https://ronanarraes.com/space-indices/leap_seconds.csv'...",
     ) match_mode = :any SpaceIndices.init(LeapSeconds)
 end
 
@@ -138,10 +139,10 @@ end
 # This dummy space index set is used only to test if the optional API function `filenames`
 # is working properly.
 
-struct DummySet <: SpaceIndexSet
-end
+struct DummySet <: SpaceIndexSet end
 
-SpaceIndices.urls(::Type{DummySet}) = ["https://ronanarraes.com/space-indices/leap_seconds.csv"]
+SpaceIndices.urls(::Type{DummySet}) =
+    ["https://ronanarraes.com/space-indices/leap_seconds.csv"]
 SpaceIndices.expiry_periods(::Type{DummySet}) = [Day(365)]
 SpaceIndices.filenames(::Type{DummySet}) = ["dummy.csv"]
 SpaceIndices.parse_files(::Type{DummySet}, filepaths::Vector{String}) = DummySet()
@@ -154,7 +155,7 @@ SpaceIndices.@register DummySet
 
     @test_logs (
         :info,
-        "Downloading the file 'dummy.csv' from 'https://ronanarraes.com/space-indices/leap_seconds.csv'..."
+        "Downloading the file 'dummy.csv' from 'https://ronanarraes.com/space-indices/leap_seconds.csv'...",
     ) match_mode = :any SpaceIndices.init(DummySet)
 
     # Check if the file exits.

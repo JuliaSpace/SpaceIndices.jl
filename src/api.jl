@@ -40,11 +40,9 @@ macro object(T)
     object_data_handler = _data_handler_symbol(T)
 
     ex = quote
-        isavailable($object_data_handler) || error(
-            """
-            The space index $(string($T)) was not initialized yet.
-            See the function SpaceIndices.init() for more information."""
-        )
+        isavailable($object_data_handler) || error("""
+                                                   The space index $(string($T)) was not initialized yet.
+                                                   See the function SpaceIndices.init() for more information.""")
         get($object_data_handler)
     end
 
@@ -145,7 +143,7 @@ parse_files
 #
 # - `force_download::Bool`: If `true`, the files will be downloaded regardless of its
 #   timestamp. (**Default** = `false`)
-function _fetch_files(::Type{T}; force_download::Bool = false) where T<:SpaceIndexSet
+function _fetch_files(::Type{T}; force_download::Bool = false) where {T <: SpaceIndexSet}
     # Get the information for the structure `T`.
     T_urls           = urls(T)
     T_filenames      = filenames(T)
@@ -164,8 +162,7 @@ function _fetch_files(::Type{T}; force_download::Bool = false) where T<:SpaceInd
 
             isempty(filename) && error("""
                 The filename could not be obtained from the URL $url.
-                Please, provide the information using the API function `SpaceIndices.filenames`."""
-            )
+                Please, provide the information using the API function `SpaceIndices.filenames`.""")
 
             push!(T_filenames, filename)
         end
@@ -179,7 +176,7 @@ function _fetch_files(::Type{T}; force_download::Bool = false) where T<:SpaceInd
             key,
             T_filenames[k];
             force_download = force_download,
-            expiry_period  = T_expiry_periods[k]
+            expiry_period  = T_expiry_periods[k],
         )
     end
 

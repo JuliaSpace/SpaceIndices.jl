@@ -19,15 +19,13 @@ function constant_interpolation(knots::AbstractVector, values::AbstractVector, x
     knots_end = last(knots)
 
     if !(knots_beg <= x <= knots_end)
-
         x_dt = julian2datetime(x)
         knots_beg_dt = julian2datetime(knots_beg)
         knots_end_dt = julian2datetime(knots_end)
 
         throw(ArgumentError("""
             There is no available data for x = $(x_dt)!
-            The available interval is: x ∈ [$knots_beg_dt, $knots_end_dt]."""
-        ))
+            The available interval is: x ∈ [$knots_beg_dt, $knots_end_dt]."""))
     end
 
     # Find the vector index related to the request interval using binary search. We can
@@ -54,8 +52,7 @@ function linear_interpolation(knots::AbstractVector, values::AbstractVector, x::
 
         throw(ArgumentError("""
             There is no available data for x = $(x_dt)!
-            The available interval is: x ∈ [$knots_beg_dt -- $knots_end_dt]."""
-        ))
+            The available interval is: x ∈ [$knots_beg_dt -- $knots_end_dt]."""))
     end
 
     # Find the vector index related to the request interval using binary search. We can
@@ -77,7 +74,7 @@ function linear_interpolation(knots::AbstractVector, values::AbstractVector, x::
         Δy = y₁ - y₀
         Δx = x₁ - x₀
 
-        y  = y₀ + Δy * (x - x₀) / Δx
+        y = y₀ + Δy * (x - x₀) / Δx
 
         return y
     end

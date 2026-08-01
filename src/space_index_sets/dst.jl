@@ -42,8 +42,9 @@ const _DST_PROV_START_YEAR  = 2021
 # initializing the Dst space index set. It also guarantees that those functions see a
 # consistent file list.
 const _DST_PROV_MONTH_CACHE_VALIDITY = Minute(15)
-const _DST_PROV_MONTH_CACHE =
-    Ref{Tuple{DateTime, Union{Nothing, Tuple{Int, Int}}}}((DateTime(0), nothing))
+const _DST_PROV_MONTH_CACHE = Ref{Tuple{DateTime, Union{Nothing, Tuple{Int, Int}}}}((
+    DateTime(0), nothing
+))
 
 # Month name lookup for parsing the header in DST HTML pages.
 const _DST_MONTH_NAMES = Dict{String, Int}(
@@ -58,7 +59,7 @@ const _DST_MONTH_NAMES = Dict{String, Int}(
     "SEPTEMBER" => 9,
     "OCTOBER"   => 10,
     "NOVEMBER"  => 11,
-    "DECEMBER"  => 12
+    "DECEMBER"  => 12,
 )
 
 ############################################################################################
@@ -160,7 +161,7 @@ function parse_files(::Type{Dst}, filepaths::Vector{String}; kwargs...)
     # Pre-allocate with a rough estimate: ~68 years × 365 days × 24 hours ≈ 600k entries.
     vjd  = Float64[]
     vdst = Float64[]
-    sizehint!(vjd,  600_000)
+    sizehint!(vjd, 600_000)
     sizehint!(vdst, 600_000)
 
     for filepath in filepaths
@@ -193,15 +194,23 @@ function urls(::Type{Dst})
         if startswith(file, "dst_final")
             year = file[11:14]
             month = file[16:17]
-            push!(vurls, "https://wdc.kugi.kyoto-u.ac.jp/dst_final/$(year)$(month)/index.html")
+            push!(
+                vurls, "https://wdc.kugi.kyoto-u.ac.jp/dst_final/$(year)$(month)/index.html"
+            )
         elseif startswith(file, "dst_prov")
             year = file[10:13]
             month = file[15:16]
-            push!(vurls, "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/$(year)$(month)/index.html")
+            push!(
+                vurls,
+                "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/$(year)$(month)/index.html",
+            )
         elseif startswith(file, "dst_realtime")
             year = file[14:17]
             month = file[19:20]
-            push!(vurls, "https://wdc.kugi.kyoto-u.ac.jp/dst_realtime/$(year)$(month)/index.html")
+            push!(
+                vurls,
+                "https://wdc.kugi.kyoto-u.ac.jp/dst_realtime/$(year)$(month)/index.html",
+            )
         else
             @warn "Unrecognized DST filename format: $file"
         end
@@ -335,7 +344,7 @@ function _probe_latest_month_with_provisional_data()
     # YYYYMM links.
     if latest_year == 0
         current_dt = now()
-        year  = Dates.year(current_dt)
+        year = Dates.year(current_dt)
         month = Dates.month(current_dt)
 
         while year > _DST_PROV_START_YEAR || (year == _DST_PROV_START_YEAR && month >= 1)
@@ -345,8 +354,7 @@ function _probe_latest_month_with_provisional_data()
             ok = true
             try
                 download(
-                    "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/$(ym)/index.html",
-                    probe,
+                    "https://wdc.kugi.kyoto-u.ac.jp/dst_provisional/$(ym)/index.html", probe
                 )
             catch
                 ok = false
@@ -449,7 +457,7 @@ function _parse_dst_html!(vjd::Vector{Float64}, vdst::Vector{Float64}, filepath:
             abs(dst_val) >= 9999.0 && continue
 
             jd = datetime2julian(DateTime(year, month, day, h, 0, 0))
-            push!(vjd,  jd)
+            push!(vjd, jd)
             push!(vdst, dst_val)
         end
     end
@@ -463,7 +471,7 @@ date. The function assumes that `vjd` is sorted in ascending order and resizes b
 vectors to the deduplicated length.
 """
 function _deduplicate_dst!(vjd::Vector{Float64}, vdst::Vector{Float64})
-    isempty(vjd) && return
+    isempty(vjd) && return nothing
 
     write_idx = 1
     for read_idx in 2:length(vjd)
@@ -471,12 +479,12 @@ function _deduplicate_dst!(vjd::Vector{Float64}, vdst::Vector{Float64})
             # Duplicate timestamp: overwrite with the newer value.
             vdst[write_idx] = vdst[read_idx]
         else
-            write_idx += 1
+            write_idx       += 1
             vjd[write_idx]  = vjd[read_idx]
             vdst[write_idx] = vdst[read_idx]
         end
     end
 
-    resize!(vjd,  write_idx)
-    resize!(vdst, write_idx)
+    resize!(vjd, write_idx)
+    return resize!(vdst, write_idx)
 end

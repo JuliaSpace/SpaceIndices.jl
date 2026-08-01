@@ -76,7 +76,7 @@ const HP_VALUES = [
     11.667,
     12.000,
     12.667,
-    13.333
+    13.333,
 ]
 
 const AP_VALUES = [
@@ -118,7 +118,7 @@ const AP_VALUES = [
     574,
     617,
     705,
-    801
+    801,
 ]
 
 ############################################################################################
@@ -130,7 +130,7 @@ function urls(::Type{Hpo})
         "https://kp.gfz.de/app/files/Hp30_ap30_complete_series.txt",
         "https://kp.gfz.de/app/files/Hp60_ap60_complete_series.txt",
         "https://isdc-data.gfz.de/geomagnetism/HpoForecast/v0102/output/Hpo/json/hpo_forecast_mean_bars_Hp30.json",
-        "https://isdc-data.gfz.de/geomagnetism/HpoForecast/v0102/output/Hpo/json/hpo_forecast_mean_bars_Hp60.json"
+        "https://isdc-data.gfz.de/geomagnetism/HpoForecast/v0102/output/Hpo/json/hpo_forecast_mean_bars_Hp60.json",
     ]
 end
 
@@ -256,7 +256,7 @@ end
 #                                    Private Functions                                     #
 ############################################################################################
 
-function _parse_hpo_file_daily(filepath::String, ::Val{n_per_day}) where n_per_day
+function _parse_hpo_file_daily(filepath::String, ::Val{n_per_day}) where {n_per_day}
     # Dictionary to accumulate data by date
     # Key: (year, month, day), Value: Dict with interval index => (hp, ap)
     daily_data = Dict{Tuple{Int, Int, Int}, Dict{Int, Tuple{Float64, Float64}}}()
@@ -274,12 +274,12 @@ function _parse_hpo_file_daily(filepath::String, ::Val{n_per_day}) where n_per_d
             try
                 # Extract fields.
                 # Format: YYYY MM DD hh.h hh._m days days_m Hp ap D
-                year   = parse(Int, tokens[1])
-                month  = parse(Int, tokens[2])
-                day    = parse(Int, tokens[3])
-                hh_h   = parse(Float64, tokens[4])  # Start hour of interval
-                hp     = parse(Float64, tokens[8])
-                ap     = parse(Float64, tokens[9])
+                year  = parse(Int, tokens[1])
+                month = parse(Int, tokens[2])
+                day   = parse(Int, tokens[3])
+                hh_h  = parse(Float64, tokens[4])  # Start hour of interval
+                hp    = parse(Float64, tokens[8])
+                ap    = parse(Float64, tokens[9])
 
                 # Calculate which interval this is within the day
                 # For Hp30: hh_h = 0.0, 0.5, 1.0, ..., 23.5 (48 values)
@@ -371,7 +371,7 @@ function _hp_to_ap(hp::Float64)
     return Float64(AP_VALUES[id])
 end
 
-function _parse_hpo_forecast_json(filepath::String, ::Val{n_per_day}) where n_per_day
+function _parse_hpo_forecast_json(filepath::String, ::Val{n_per_day}) where {n_per_day}
     # Read and parse the JSON file
     json_data = JSON.parsefile(filepath)
 

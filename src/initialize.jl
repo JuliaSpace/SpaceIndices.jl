@@ -29,8 +29,8 @@ function init(
     ::Type{T};
     filepaths::Union{Nothing, Vector{String}} = nothing,
     force_download::Bool = false,
-    kwargs...
-) where T<:SpaceIndexSet
+    kwargs...,
+) where {T <: SpaceIndexSet}
     id = findfirst(x -> first(x) === T, _SPACE_INDEX_SETS)
     isnothing(id) && throw(ArgumentError("The space index set $T is not registered!"))
 
@@ -39,7 +39,7 @@ function init(
 
     # Fetch the files, if necessary, and parse it.
     if isnothing(filepaths)
-        fp = _fetch_files(T; force_download=force_download)
+        fp = _fetch_files(T; force_download = force_download)
     else
         # We must check if the number of files in `filepaths` is the same as in the `url`
         # function.
@@ -47,7 +47,7 @@ function init(
         lf = length(filepaths)
 
         (lu != lf) && error(
-            "We expected $lu files for the space index set $T in the keyword `filepaths`. However, $lf files were provided."
+            "We expected $lu files for the space index set $T in the keyword `filepaths`. However, $lf files were provided.",
         )
 
         fp = filepaths

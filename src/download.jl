@@ -16,7 +16,7 @@ function _download_file(
     key::String,
     filename::String;
     force_download::Bool = false,
-    expiry_period::DatePeriod = Day(7)
+    expiry_period::DatePeriod = Day(7),
 )
     filepath = get_filepath(filename, key)
 

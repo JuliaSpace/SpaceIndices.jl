@@ -4,11 +4,17 @@
 #
 ############################################################################################
 @testset "Aqua.jl" begin
-    Aqua.test_all(SpaceIndices; ambiguities=(recursive = false), deps_compat=(check_extras = false))
+    Aqua.test_all(
+        SpaceIndices;
+        ambiguities = (recursive = false),
+        deps_compat = (check_extras = false),
+    )
 end
 
 @testset "JET Testing" begin
-    rep = JET.test_package(SpaceIndices; toplevel_logger=nothing, target_modules=(SpaceIndices,))
+    rep = JET.test_package(
+        SpaceIndices; toplevel_logger = nothing, target_modules = (SpaceIndices,)
+    )
 end
 
 # Skip allocation tests on macOS with Julia 1.12+ due to AllocCheck detecting

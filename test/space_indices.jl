@@ -330,23 +330,23 @@ end
     dt = DateTime(1996, 12, 31)
     jd = datetime2julian(dt)
 
-    @test_throws ArgumentError space_index(Val(:DTC),  dt)
-    @test_throws ArgumentError space_index(Val(:DTC),  jd)
+    @test_throws ArgumentError space_index(Val(:DTC), dt)
+    @test_throws ArgumentError space_index(Val(:DTC), jd)
 
-    @test_throws ArgumentError space_index(Val(:S10),  dt)
-    @test_throws ArgumentError space_index(Val(:S10),  jd)
+    @test_throws ArgumentError space_index(Val(:S10), dt)
+    @test_throws ArgumentError space_index(Val(:S10), jd)
 
     @test_throws ArgumentError space_index(Val(:S81a), dt)
     @test_throws ArgumentError space_index(Val(:S81a), jd)
 
-    @test_throws ArgumentError space_index(Val(:M10),  dt)
-    @test_throws ArgumentError space_index(Val(:M10),  jd)
+    @test_throws ArgumentError space_index(Val(:M10), dt)
+    @test_throws ArgumentError space_index(Val(:M10), jd)
 
     @test_throws ArgumentError space_index(Val(:M81a), dt)
     @test_throws ArgumentError space_index(Val(:M81a), jd)
 
-    @test_throws ArgumentError space_index(Val(:Y10),  dt)
-    @test_throws ArgumentError space_index(Val(:Y10),  jd)
+    @test_throws ArgumentError space_index(Val(:Y10), dt)
+    @test_throws ArgumentError space_index(Val(:Y10), jd)
 
     @test_throws ArgumentError space_index(Val(:Y81a), dt)
     @test_throws ArgumentError space_index(Val(:Y81a), jd)
@@ -376,7 +376,32 @@ end
 
     # Test Hp60 and ap60 indices
     r = space_index(Val(:Hp60), dt)
-    expected_hpo60 = (1.667, 1.667, 2.0, 2.333, 2.333, 2.667, 2.667, 2.333, 2.333, 3.333, 1.667, 1.667, 1.333, 1.0, 1.0, 1.333, .667, 1.0, 1.667, .667, .667, 1.333, .667, 2.0)
+    expected_hpo60 = (
+        1.667,
+        1.667,
+        2.0,
+        2.333,
+        2.333,
+        2.667,
+        2.667,
+        2.333,
+        2.333,
+        3.333,
+        1.667,
+        1.667,
+        1.333,
+        1.0,
+        1.0,
+        1.333,
+        0.667,
+        1.0,
+        1.667,
+        0.667,
+        0.667,
+        1.333,
+        0.667,
+        2.0,
+    )
     @test r isa NTuple{24, Float64}
     @test r == expected_hpo60
     r_jd = space_index(Val(:Hp60), jd)
@@ -384,7 +409,9 @@ end
 
     r = space_index(Val(:Ap60), dt)
     @test r isa NTuple{24, Float64}
-    expected_ap60 = (6, 6, 7, 9, 9, 12, 12, 9, 9, 18, 6, 6, 5, 4, 4, 5, 3, 4, 6, 3, 3, 5, 3, 7)
+    expected_ap60 = (
+        6, 6, 7, 9, 9, 12, 12, 9, 9, 18, 6, 6, 5, 4, 4, 5, 3, 4, 6, 3, 3, 5, 3, 7
+    )
     @test all(x -> x >= 0.0 || isnan(x), r)
     r_jd = space_index(Val(:Ap60), jd)
     @test r_jd == r

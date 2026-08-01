@@ -33,7 +33,7 @@ struct Celestrak <: SpaceIndexSet
 end
 
 function urls(::Type{Celestrak})
-    ["https://celestrak.org/SpaceData/SW-All.csv"]
+    return ["https://celestrak.org/SpaceData/SW-All.csv"]
 end
 
 expiry_periods(::Type{Celestrak}) = [Day(1)]
@@ -106,18 +106,18 @@ function parse_files(::Type{Celestrak}, filepaths::Vector{String}; kwargs...)
             f107_adj_avg_last81_k   = _parse_float(tokens[31])
 
             if (
-                isnothing(BSRN_k)                  ||
-                isnothing(ND_k)                    ||
-                isnothing(kp_k)                    ||
-                isnothing(ap_k)                    ||
-                isnothing(Cp_k)                    ||
-                isnothing(C9_k)                    ||
-                isnothing(ISN_k)                   ||
-                isnothing(ap_daily_k)              ||
-                isnothing(f107_obs_k)              ||
-                isnothing(f107_adj_k)              ||
+                isnothing(BSRN_k) ||
+                isnothing(ND_k) ||
+                isnothing(kp_k) ||
+                isnothing(ap_k) ||
+                isnothing(Cp_k) ||
+                isnothing(C9_k) ||
+                isnothing(ISN_k) ||
+                isnothing(ap_daily_k) ||
+                isnothing(f107_obs_k) ||
+                isnothing(f107_adj_k) ||
                 isnothing(f107_obs_avg_center81_k) ||
-                isnothing(f107_obs_avg_last81_k)   ||
+                isnothing(f107_obs_avg_last81_k) ||
                 isnothing(f107_adj_avg_center81_k) ||
                 isnothing(f107_adj_avg_last81_k)
             )
@@ -145,21 +145,21 @@ function parse_files(::Type{Celestrak}, filepaths::Vector{String}; kwargs...)
                 vf107_adj_avg_center81[end] = f107_adj_avg_center81_k
                 vf107_adj_avg_last81[end]   = f107_adj_avg_last81_k
             else
-                push!(vjd,                    jd_k)
-                push!(vBSRN,                  trunc(BSRN_k))
-                push!(vND,                    trunc(ND_k))
-                push!(vkp,                    _round_Kp.(kp_k))
-                push!(vap,                    trunc.(ap_k))
-                push!(vCp,                    Cp_k)
-                push!(vC9,                    C9_k)
-                push!(vISN,                   trunc(ISN_k))
-                push!(vap_daily,              trunc(ap_daily_k))
-                push!(vf107_obs,              f107_obs_k)
-                push!(vf107_adj,              f107_adj_k)
+                push!(vjd, jd_k)
+                push!(vBSRN, trunc(BSRN_k))
+                push!(vND, trunc(ND_k))
+                push!(vkp, _round_Kp.(kp_k))
+                push!(vap, trunc.(ap_k))
+                push!(vCp, Cp_k)
+                push!(vC9, C9_k)
+                push!(vISN, trunc(ISN_k))
+                push!(vap_daily, trunc(ap_daily_k))
+                push!(vf107_obs, f107_obs_k)
+                push!(vf107_adj, f107_adj_k)
                 push!(vf107_obs_avg_center81, f107_obs_avg_center81_k)
-                push!(vf107_obs_avg_last81,   f107_obs_avg_last81_k)
+                push!(vf107_obs_avg_last81, f107_obs_avg_last81_k)
                 push!(vf107_adj_avg_center81, f107_adj_avg_center81_k)
-                push!(vf107_adj_avg_last81,   f107_adj_avg_last81_k)
+                push!(vf107_adj_avg_last81, f107_adj_avg_last81_k)
             end
         end
     end
@@ -179,7 +179,7 @@ function parse_files(::Type{Celestrak}, filepaths::Vector{String}; kwargs...)
         vf107_obs_avg_center81,
         vf107_obs_avg_last81,
         vf107_adj_avg_center81,
-        vf107_adj_avg_last81
+        vf107_adj_avg_last81,
     )
 end
 
@@ -296,7 +296,6 @@ function space_index(::Val{:Kp_daily}, jd::Number)
     return sum(vkp) / length(vkp)
 end
 
-
 """
     space_index(::Val{:F10obs}, jd::Number) -> Float64
 
@@ -305,7 +304,7 @@ Get the observed F10.7 index (10.7-cm solar flux) [10⁻²² W / (m² ⋅ Hz)] a
 """
 function space_index(::Val{:F10obs}, jd::Number)
     obj    = @object(Celestrak)
-    knots  = obj.vjd 
+    knots  = obj.vjd
     values = obj.vf107_obs
     # Shift 8 hours to move center of interval to midnight since F10.7 measurement occurs at
     # 20:00 UTC.
@@ -352,9 +351,9 @@ Get the observed F10.7 index (10.7-cm solar flux) [10⁻²² W / (m² ⋅ Hz)] a
 last 81 days from the Julian day `jd` (UTC).
 """
 function space_index(::Val{:F10obs_avg_last81}, jd::Number)
-    obj      = @object(Celestrak)
-    knots    = obj.vjd
-    values   = obj.vf107_obs_avg_last81
+    obj    = @object(Celestrak)
+    knots  = obj.vjd
+    values = obj.vf107_obs_avg_last81
     # Shift 8 hours to move center of interval to midnight since F10.7 measurement occurs at
     # 20:00 UTC.
     jd_shift = jd - 8 / 24
@@ -368,9 +367,9 @@ Get the adjusted F10.7 index (10.7-cm solar flux) [10⁻²² W / (m² ⋅ Hz)] a
 days centered at the Julian day `jd` (UTC).
 """
 function space_index(::Val{:F10adj_avg_center81}, jd::Number)
-    obj      = @object(Celestrak)
-    knots    = obj.vjd
-    values   = obj.vf107_adj_avg_center81
+    obj    = @object(Celestrak)
+    knots  = obj.vjd
+    values = obj.vf107_adj_avg_center81
     # Shift 8 hours to move center of interval to midnight since F10.7 measurement occurs at
     # 20:00 UTC.
     jd_shift = jd - 8 / 24
@@ -384,9 +383,9 @@ Get the adjusted F10.7 index (10.7-cm solar flux) [10⁻²² W / (m² ⋅ Hz)] a
 last 81 days from the Julian day `jd` (UTC).
 """
 function space_index(::Val{:F10adj_avg_last81}, jd::Number)
-    obj      = @object(Celestrak)
-    knots    = obj.vjd
-    values   = obj.vf107_adj_avg_last81
+    obj    = @object(Celestrak)
+    knots  = obj.vjd
+    values = obj.vf107_adj_avg_last81
     # Shift 8 hours to move center of interval to midnight since F10.7 measurement occurs at
     # 20:00 UTC.
     jd_shift = jd - 8 / 24
@@ -411,10 +410,8 @@ Parse `N` consecutive elements of `tokens` as `Float64`s, starting at `first_ind
 function returns `nothing` if any element cannot be parsed.
 """
 function _parse_float_ntuple(
-    tokens::Vector{<:AbstractString},
-    first_index::Int,
-    ::Val{N}
-) where N
+    tokens::Vector{<:AbstractString}, first_index::Int, ::Val{N}
+) where {N}
     values = ntuple(i -> tryparse(Float64, tokens[first_index + i - 1]), Val(N))
     any(isnothing, values) && return nothing
     return map(v -> something(v), values)
@@ -427,5 +424,5 @@ Convert the Kp value `x` back to its original scale. CelesTrak multiplies Kp by 
 rounds it to the nearest integer.
 """
 function _round_Kp(x::Float64)
-    return round(round((x / 10.0) * 3) * 1/3; digits=3)
+    return round(round((x / 10.0) * 3) * 1/3; digits = 3)
 end
