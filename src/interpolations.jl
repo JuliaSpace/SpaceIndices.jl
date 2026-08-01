@@ -32,7 +32,7 @@ function constant_interpolation(knots::AbstractVector, values::AbstractVector, x
 
     # Find the vector index related to the request interval using binary search. We can
     # apply this algorithm because we assume that `knots` are unique and increasing.
-    id = _binary_search(knots, x)
+    id = searchsortedlast(knots, x)
 
     return values[id]
 end
@@ -60,7 +60,7 @@ function linear_interpolation(knots::AbstractVector, values::AbstractVector, x::
 
     # Find the vector index related to the request interval using binary search. We can
     # apply this algorithm because we assume that `knots` are unique and increasing.
-    id = _binary_search(knots, x)
+    id = searchsortedlast(knots, x)
 
     # If we are at the knot precisely, just return it.
     if x == knots[id]
@@ -81,33 +81,4 @@ function linear_interpolation(knots::AbstractVector, values::AbstractVector, x::
 
         return y
     end
-end
-
-############################################################################################
-#                                    Private Functions                                     #
-############################################################################################
-
-# Perform a interval binary search of `x` in `v`. It means that this function returns `k`
-# such that `v[k] <= x < v[k + 1]`.
-function _binary_search(v::AbstractVector, x::Number)
-    num_elements = length(v)
-    low  = 1
-    high = num_elements
-
-    while low < high
-        mid = div(low + high, 2, RoundDown)
-
-        if (mid == num_elements) || (v[mid] <= x < v[mid + 1])
-            return mid
-
-        elseif (v[mid] < x)
-            low = mid + 1
-
-        elseif (v[mid] > x)
-            high = mid
-
-        end
-    end
-
-    return low
 end
