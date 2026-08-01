@@ -103,7 +103,7 @@ Return the filenames for the remote files associated with the space index set `T
 function is not defined for `T`, it returns `nothing` and the filenames will be obtained
 based on the URLs.
 """
-filenames(::Type{T}) where T<:SpaceIndexSet = nothing
+filenames(::Type{<:SpaceIndexSet}) = nothing
 
 """
     urls(::Type{T}) where T<:SpaceIndexSet -> Vector{String}
@@ -174,12 +174,12 @@ function _fetch_files(::Type{T}; force_download::Bool = false) where T<:SpaceInd
     filepaths = Vector{String}(undef, num_T_urls)
 
     for k in 1:num_T_urls
-        filepaths[k - 1 + begin] = _download_file(
-            T_urls[k - 1 + begin],
+        filepaths[k] = _download_file(
+            T_urls[k],
             key,
-            T_filenames[begin + k - 1];
+            T_filenames[k];
             force_download = force_download,
-            expiry_period  = T_expiry_periods[k - 1 + begin]
+            expiry_period  = T_expiry_periods[k]
         )
     end
 

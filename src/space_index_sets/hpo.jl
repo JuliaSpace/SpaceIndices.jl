@@ -351,25 +351,24 @@ function _hp_to_ap(hp::Float64)
 
     isnan(hp) && return NaN
 
-    # Round hp to nearest 1/3 to match the discrete values
-    hp_rounded = round(hp * 3) / 3
+    # Round Hp to the nearest 1/3 to match the discrete values in the table.
+    n = round(Int, 3hp)
 
-    # Find exact match in the table
-    for i in 1:length(HP_VALUES)
-        # Small tolerance for floating point comparison.
-        if abs(hp_rounded - HP_VALUES[i + begin - 1]) < 0.01
-            return Float64(AP_VALUES[i + begin - 1])
-        end
+    # The table is uniform with steps of 1/3 up to 12.000 (index 37). The last two entries
+    # are 12.667 (index 38) and 13.333 (index 39). Values without an exact match in the
+    # table are converted using the nearest lower entry, and negative values are clamped to
+    # the first entry.
+    id = if n <= 36
+        max(n, 0) + 1
+    elseif n <= 37
+        37
+    elseif n <= 39
+        38
+    else
+        39
     end
 
-    # If no exact match, find the nearest lower value
-    for i in length(HP_VALUES):-1:1
-        if hp_rounded >= HP_VALUES[i + begin - 1]
-            return Float64(AP_VALUES[i + begin - 1])
-        end
-    end
-
-    return 0.0
+    return Float64(AP_VALUES[id])
 end
 
 function _parse_hpo_forecast_json(filepath::String, ::Val{n_per_day}) where n_per_day
