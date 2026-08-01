@@ -374,10 +374,10 @@ end
 
 function _parse_hpo_forecast_json(filepath::String, ::Val{n_per_day}) where n_per_day
     # Read and parse the JSON file
-    json_data = JSON.parsefile(filepath)::Dict{String, Any}
+    json_data = JSON.parsefile(filepath)
 
     # Use MEDIAN forecast values
-    median_data = json_data["MEDIAN"]::Dict{String, Any}
+    median_data = json_data["MEDIAN"]
 
     # Dictionary to accumulate data by date
     daily_data = Dict{Tuple{Int, Int, Int}, Dict{Int, Float64}}()
@@ -404,7 +404,7 @@ function _parse_hpo_forecast_json(filepath::String, ::Val{n_per_day}) where n_pe
         end
 
         # Store the Hp value
-        daily_data[date_key][interval_index] = hp_value
+        daily_data[date_key][interval_index] = Float64(hp_value)
     end
 
     # Sort dates and create output vectors
