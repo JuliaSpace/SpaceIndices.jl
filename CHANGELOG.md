@@ -1,6 +1,29 @@
 SpaceIndices.jl Changelog
 =========================
 
+Version 2.2.0
+-------------
+
+- ![Enhancement][badge-enhancement] The CelesTrak file parser now streams the file with
+  typed parsing instead of using `readdlm`, substantially reducing the allocations during
+  the initialization.
+- ![Enhancement][badge-enhancement] The latest provisional Dst month is now cached. Hence,
+  the initialization of the Dst space index set performs one network probe instead of
+  three, and the file list seen by the API functions is always consistent.
+- ![Enhancement][badge-enhancement] We removed type instabilities in the Hpo file parsers.
+- ![Bugfix][badge-bugfix] We fixed a bug in the CelesTrak file parser that could silently
+  delete the data of a day when the file contained duplicated or predicted-monthly entries.
+- ![Bugfix][badge-bugfix] We fixed a bug in the JB2008 file parsers that threw a
+  `BoundsError` when the files contained empty lines.
+- ![Bugfix][badge-bugfix] We fixed a bug in the Hpo forecast merge that could associate
+  data with the wrong day if the Hp30 and Hp60 forecast files had different date ranges.
+- ![Bugfix][badge-bugfix] We fixed the macro `SpaceIndices.@data_handler`, which ignored
+  its argument and only worked inside `SpaceIndices.@register` and `SpaceIndices.@object`.
+- ![Info][badge-info] The package now requires JSON.jl v1 and no longer depends on
+  DelimitedFiles.jl.
+- ![Info][badge-info] We fixed many errors in the documentation, including wrong return
+  types and signatures in docstrings.
+
 Version 2.1.1
 -------------
 
@@ -101,12 +124,12 @@ Version 0.1.0
   - This version was based on the code in **SatelliteToolbox.jl**. However, many API changes
     were implemented.
 
-[badge-breaking]: https://img.shields.io/badge/BREAKING-red.svg
-[badge-deprecation]: https://img.shields.io/badge/Deprecation-orange.svg
-[badge-feature]: https://img.shields.io/badge/Feature-green.svg
-[badge-enhancement]: https://img.shields.io/badge/Enhancement-blue.svg
-[badge-bugfix]: https://img.shields.io/badge/Bugfix-purple.svg
-[badge-info]: https://img.shields.io/badge/Info-gray.svg
+[badge-breaking]: https://img.shields.io/badge/Breaking-DC2626?style=flat-square
+[badge-deprecation]: https://img.shields.io/badge/Deprecation-D97706?style=flat-square
+[badge-feature]: https://img.shields.io/badge/Feature-16A34A?style=flat-square
+[badge-enhancement]: https://img.shields.io/badge/Enhancement-0284C7?style=flat-square
+[badge-bugfix]: https://img.shields.io/badge/Bugfix-DB2777?style=flat-square
+[badge-info]: https://img.shields.io/badge/Info-475569?style=flat-square
 
 [gh-issue-4]: https://github.com/JuliaSpace/SpaceIndices.jl/issues/4
 [gh-issue-5]: https://github.com/JuliaSpace/SpaceIndices.jl/issues/5
