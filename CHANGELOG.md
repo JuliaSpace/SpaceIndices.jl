@@ -1,6 +1,16 @@
 SpaceIndices.jl Changelog
 =========================
 
+Version 2.3.0
+-------------
+
+- ![Feature][badge-feature] We added the space index set `SatelliteToolboxSpaceIndexSets`,
+  which provides the new index `F10predicted`: a long-term prediction of the F10.7 index
+  computed using a harmonic model fitted to the observed data. The model coefficients are
+  fitted daily in the repository [SatelliteToolboxSpaceIndexSets][stsis-repo].
+- ![Info][badge-info] We removed the index `DTC_Dst` from the documentation since it was
+  removed from the package in v2.1.1.
+
 Version 2.2.0
 -------------
 
@@ -130,6 +140,8 @@ Version 0.1.0
 [badge-enhancement]: https://img.shields.io/badge/Enhancement-0284C7?style=flat-square
 [badge-bugfix]: https://img.shields.io/badge/Bugfix-DB2777?style=flat-square
 [badge-info]: https://img.shields.io/badge/Info-475569?style=flat-square
+
+[stsis-repo]: https://github.com/JuliaSpace/SatelliteToolboxSpaceIndexSets
 
 [gh-issue-4]: https://github.com/JuliaSpace/SpaceIndices.jl/issues/4
 [gh-issue-5]: https://github.com/JuliaSpace/SpaceIndices.jl/issues/5
