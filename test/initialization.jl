@@ -12,6 +12,8 @@
     @test SpaceIndices._OPDATA_JB2008.data isa SpaceIndices.JB2008
     @test SpaceIndices._OPDATA_CELESTRAK.data isa SpaceIndices.Celestrak
     @test SpaceIndices._OPDATA_HPO.data isa SpaceIndices.Hpo
+    @test SpaceIndices._OPDATA_SATELLITETOOLBOXSPACEINDEXSETS.data isa
+        SpaceIndices.SatelliteToolboxSpaceIndexSets
     @test SpaceIndices._OPDATA_DST.data isa Nothing  # Dst excluded by default
 
     # Destroy everything to test the individual initialization.
@@ -21,6 +23,7 @@
     @test SpaceIndices._OPDATA_JB2008.data isa SpaceIndices.JB2008
     @test SpaceIndices._OPDATA_CELESTRAK.data isa Nothing
     @test SpaceIndices._OPDATA_HPO.data isa Nothing
+    @test SpaceIndices._OPDATA_SATELLITETOOLBOXSPACEINDEXSETS.data isa Nothing
     @test SpaceIndices._OPDATA_DST.data isa Nothing
     SpaceIndices.destroy()
 
@@ -28,6 +31,7 @@
     @test SpaceIndices._OPDATA_JB2008.data isa Nothing
     @test SpaceIndices._OPDATA_CELESTRAK.data isa SpaceIndices.Celestrak
     @test SpaceIndices._OPDATA_HPO.data isa Nothing
+    @test SpaceIndices._OPDATA_SATELLITETOOLBOXSPACEINDEXSETS.data isa Nothing
     @test SpaceIndices._OPDATA_DST.data isa Nothing
     SpaceIndices.destroy()
 
@@ -35,6 +39,16 @@
     @test SpaceIndices._OPDATA_JB2008.data isa Nothing
     @test SpaceIndices._OPDATA_CELESTRAK.data isa Nothing
     @test SpaceIndices._OPDATA_HPO.data isa SpaceIndices.Hpo
+    @test SpaceIndices._OPDATA_SATELLITETOOLBOXSPACEINDEXSETS.data isa Nothing
+    @test SpaceIndices._OPDATA_DST.data isa Nothing
+    SpaceIndices.destroy()
+
+    SpaceIndices.init(SpaceIndices.SatelliteToolboxSpaceIndexSets)
+    @test SpaceIndices._OPDATA_JB2008.data isa Nothing
+    @test SpaceIndices._OPDATA_CELESTRAK.data isa Nothing
+    @test SpaceIndices._OPDATA_HPO.data isa Nothing
+    @test SpaceIndices._OPDATA_SATELLITETOOLBOXSPACEINDEXSETS.data isa
+        SpaceIndices.SatelliteToolboxSpaceIndexSets
     @test SpaceIndices._OPDATA_DST.data isa Nothing
     SpaceIndices.destroy()
 
@@ -48,6 +62,8 @@
     @test SpaceIndices._OPDATA_JB2008.data isa SpaceIndices.JB2008
     @test SpaceIndices._OPDATA_CELESTRAK.data isa Nothing
     @test SpaceIndices._OPDATA_HPO.data isa SpaceIndices.Hpo
+    @test SpaceIndices._OPDATA_SATELLITETOOLBOXSPACEINDEXSETS.data isa
+        SpaceIndices.SatelliteToolboxSpaceIndexSets
     @test SpaceIndices._OPDATA_DST.data isa Nothing
     SpaceIndices.destroy()
 
@@ -55,6 +71,8 @@
     @test SpaceIndices._OPDATA_JB2008.data isa SpaceIndices.JB2008
     @test SpaceIndices._OPDATA_CELESTRAK.data isa SpaceIndices.Celestrak
     @test SpaceIndices._OPDATA_HPO.data isa Nothing
+    @test SpaceIndices._OPDATA_SATELLITETOOLBOXSPACEINDEXSETS.data isa
+        SpaceIndices.SatelliteToolboxSpaceIndexSets
     @test SpaceIndices._OPDATA_DST.data isa Nothing
     SpaceIndices.destroy()
 
@@ -63,6 +81,8 @@
     @test SpaceIndices._OPDATA_JB2008.data isa SpaceIndices.JB2008
     @test SpaceIndices._OPDATA_CELESTRAK.data isa SpaceIndices.Celestrak
     @test SpaceIndices._OPDATA_HPO.data isa SpaceIndices.Hpo
+    @test SpaceIndices._OPDATA_SATELLITETOOLBOXSPACEINDEXSETS.data isa
+        SpaceIndices.SatelliteToolboxSpaceIndexSets
     @test SpaceIndices._OPDATA_DST.data isa Nothing
     SpaceIndices.destroy()
 end
@@ -124,6 +144,8 @@ end
 
     @test_throws Exception space_index(Val(:Dst), dt)
     @test_throws Exception space_index(Val(:DTC_Dst), dt)
+
+    @test_throws Exception space_index(Val(:F10predicted), dt)
 end
 
 @testset "Errors Related To Space Index Set Initialization" begin

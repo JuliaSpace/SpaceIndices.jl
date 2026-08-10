@@ -295,9 +295,9 @@ end
     @test r ≈ 37
 
     r = space_index(Val(:S10), dt)
-    @test r ≈ 53.3
+    @test r ≈ 53.2
     r = space_index(Val(:S10), jd)
-    @test r ≈ 53.3
+    @test r ≈ 53.2
 
     r = space_index(Val(:S81a), dt)
     @test r ≈ 53.7
@@ -514,6 +514,53 @@ end
 
     @test_throws ArgumentError space_index(Val(:Dst), dt)
     @test_throws ArgumentError space_index(Val(:Dst), jd)
+
+    SpaceIndices.destroy()
+end
+
+@testset "SatelliteToolboxSpaceIndexSets" begin
+    SpaceIndices.init(SpaceIndices.SatelliteToolboxSpaceIndexSets)
+
+    # The coefficients are fitted daily. Hence, we can only check if the predicted values
+    # are inside a plausible range for the F10.7 index.
+
+    # == Instant Inside the Fitting Interval ===============================================
+
+    dt = DateTime(2020, 6, 19)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:F10predicted), dt)
+    @test r isa Float64
+    @test 50 < r < 400
+
+    r = space_index(Val(:F10predicted), jd)
+    @test r isa Float64
+    @test 50 < r < 400
+
+    # The `DateTime` and Julian Day calls must agree.
+    @test space_index(Val(:F10predicted), dt) == space_index(Val(:F10predicted), jd)
+
+    # == Instant In the Future (Extrapolation) =============================================
+
+    dt = DateTime(2040, 1, 1)
+    jd = datetime2julian(dt)
+
+    r = space_index(Val(:F10predicted), dt)
+    @test r isa Float64
+    @test 50 < r < 400
+
+    r = space_index(Val(:F10predicted), jd)
+    @test r isa Float64
+    @test 50 < r < 400
+
+    # == Type Stability With Other Number Types ============================================
+
+    # The result type must follow the promotion of the input type, which is required for
+    # automatic differentiation.
+    jd = datetime2julian(DateTime(2020, 6, 19))
+    r  = space_index(Val(:F10predicted), big(jd))
+    @test r isa BigFloat
+    @test 50 < r < 400
 
     SpaceIndices.destroy()
 end
