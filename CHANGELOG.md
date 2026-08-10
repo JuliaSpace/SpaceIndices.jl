@@ -11,6 +11,10 @@ Version 2.3.0
 - ![Enhancement][badge-enhancement] The remote files are now downloaded using up to three
   attempts with a delay between them, improving the resilience against transient network
   failures.
+- ![Enhancement][badge-enhancement] If all the attempts to download a remote file fail but
+  an old version exists in the local cache, the package now uses the cached file, logging
+  a warning, instead of throwing an error. Additionally, a failed download no longer
+  deletes the previously cached version of the file.
 - ![Info][badge-info] We removed the index `DTC_Dst` from the documentation since it was
   removed from the package in v2.1.1.
 
