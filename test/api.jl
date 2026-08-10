@@ -163,3 +163,34 @@ SpaceIndices.@register DummySet
     filepath  = joinpath(cache_dir, "dummy.csv")
     @test isfile(filepath) == true
 end
+
+@testset "Download Retries and Cached File Fallback" begin
+    # Make sure the scratch space is clean.
+    delete_scratch!(SpaceIndices, "DownloadFallback")
+
+    bad_url = "https://this-domain-does-not-exist.invalid/data.csv"
+
+    # Without a cached file, the error must be rethrown after all the download attempts.
+    @test_throws Exception SpaceIndices._download_file(
+        bad_url, "DownloadFallback", "data.csv"
+    )
+
+    # Create a cached file with an expired timestamp.
+    cache_dir      = get_scratch!(SpaceIndices, "DownloadFallback")
+    filepath       = joinpath(cache_dir, "data.csv")
+    file_timestamp = filepath * "_timestamp"
+    old_timestamp  = DateTime(2000, 1, 1)
+
+    write(filepath, "cached data")
+    write(file_timestamp, string(old_timestamp))
+
+    # With a cached file, the fallback must return it, keeping its content and timestamp
+    # untouched so the next initialization tries to download the file again.
+    r = SpaceIndices._download_file(
+        bad_url, "DownloadFallback", "data.csv"; expiry_period = Day(1)
+    )
+
+    @test r == filepath
+    @test read(filepath, String) == "cached data"
+    @test SpaceIndices.get_download_timestamp(filepath) == old_timestamp
+end
