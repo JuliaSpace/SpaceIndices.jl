@@ -8,6 +8,9 @@ Version 2.3.0
   which provides the new index `F10predicted`: a long-term prediction of the F10.7 index
   computed using a harmonic model fitted to the observed data. The model coefficients are
   fitted daily in the repository [SatelliteToolboxSpaceIndexSets][stsis-repo].
+- ![Enhancement][badge-enhancement] The remote files are now downloaded using up to three
+  attempts with a delay between them, improving the resilience against transient network
+  failures.
 - ![Info][badge-info] We removed the index `DTC_Dst` from the documentation since it was
   removed from the package in v2.1.1.
 
