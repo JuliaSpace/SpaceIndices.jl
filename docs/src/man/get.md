@@ -31,38 +31,44 @@ space_index(Val(:F10adj), 2.4590195e6)
 
 The following space indices are currently supported:
 
-| **Space Index Set** | **Index**             | **Description**                                                    | **Unit**            |
-|:--------------------|:----------------------|:-------------------------------------------------------------------|:--------------------|
-| `Celestrak`         | `F10obs`              | Observed F10.7 (10.7-cm solar flux)                                | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `F10obs_avg_center81` | Observed F10.7 (10.7-cm solar flux) averaged over 81 days centered | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `F10obs_avg_last81`   | Observed F10.7 (10.7-cm solar flux) averaged over 81 last days     | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `F10adj`              | Adjusted F10.7 (10.7-cm solar flux)                                | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `F10adj_avg_center81` | Observed F10.7 (10.7-cm solar flux) averaged over 81 days centered | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `F10adj_avg_last81`   | Observed F10.7 (10.7-cm solar flux) averaged over 81 last days     | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `Ap`                  | Ap index computed every three hours                                |                     |
-|                     | `Ap_daily`            | Daily Ap index                                                     |                     |
-|                     | `Kp`                  | Kp index computed every three hours                                |                     |
-|                     | `Kp_daily`            | Daily Kp index                                                     |                     |
-|                     | `Cp`                  | Daily planetary character figure                                   |                     |
-|                     | `C9`                  | Daily magnetic index on Cp basis                                   |                     |
-|                     | `ISN`                 | International sunspot number                                       |                     |
-|                     | `BSRN`                | Bartels solar rotation number                                      |                     |
-|                     | `ND`                  | Number of days into Bartels solar rotation cycle                   | Days                |
-| `JB2008`            | `DTC`                 | Exospheric temperature variation caused by the Dst index           | K                   |
-|                     | `S10`                 | EUV index (26-34 nm) scaled to F10.7                               | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `M10`                 | MG2 index scaled to F10.7                                          | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `Y10`                 | Solar X-ray & Lya index scaled to F10.7                            | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `S81a`                | 81-day averaged EUV index (26-34 nm) scaled to F10.7               | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `M81a`                | 81-day averaged MG2 index scaled to F10.7                          | 10⁻²² W / (M² ⋅ Hz) |
-|                     | `Y81a`                | 81-day averaged solar X-ray & Lya index scaled to F10.7            | 10⁻²² W / (M² ⋅ Hz) |
-| `Hpo`               | `Hp30`                | Geomagnetic index with 30-minute resolution                        |                     |
-|                     | `ap30`                | Linear geomagnetic activity index (30-minute)                      |                     |
-|                     | `Hp60`                | Geomagnetic index with 60-minute resolution                        |                     |
-|                     | `ap60`                | Linear geomagnetic activity index (60-minute)                      |                     |
-| `Dst`               | `Dst`                 | Disturbance Storm Time index (hourly)                              | nT                  |
-|                     | `DTC_Dst`             | Exospheric temperature variation from Dst (DTCMAKEDR algorithm)    | K                   |
+| **Space Index Set** | **Index** | **Description** | **Unit** |
+| :--- | :--- | :--- | :--- |
+| `Celestrak` | `F10obs` | Observed F10.7 (10.7-cm solar flux) | 10⁻²² W / (M² ⋅ Hz) |
+|  | `F10obs_avg_center81` | Observed F10.7 (10.7-cm solar flux) averaged over 81 days centered | 10⁻²² W / (M² ⋅ Hz) |
+|  | `F10obs_avg_last81` | Observed F10.7 (10.7-cm solar flux) averaged over 81 last days | 10⁻²² W / (M² ⋅ Hz) |
+|  | `F10adj` | Adjusted F10.7 (10.7-cm solar flux) | 10⁻²² W / (M² ⋅ Hz) |
+|  | `F10adj_avg_center81` | Observed F10.7 (10.7-cm solar flux) averaged over 81 days centered | 10⁻²² W / (M² ⋅ Hz) |
+|  | `F10adj_avg_last81` | Observed F10.7 (10.7-cm solar flux) averaged over 81 last days | 10⁻²² W / (M² ⋅ Hz) |
+|  | `Ap` | Ap index computed every three hours |  |
+|  | `Ap_daily` | Daily Ap index |  |
+|  | `Kp` | Kp index computed every three hours |  |
+|  | `Kp_daily` | Daily Kp index |  |
+|  | `Cp` | Daily planetary character figure |  |
+|  | `C9` | Daily magnetic index on Cp basis |  |
+|  | `ISN` | International sunspot number |  |
+|  | `BSRN` | Bartels solar rotation number |  |
+|  | `ND` | Number of days into Bartels solar rotation cycle | Days |
+| `JB2008` | `DTC` | Exospheric temperature variation caused by the Dst index | K |
+|  | `S10` | EUV index (26-34 nm) scaled to F10.7 | 10⁻²² W / (M² ⋅ Hz) |
+|  | `M10` | MG2 index scaled to F10.7 | 10⁻²² W / (M² ⋅ Hz) |
+|  | `Y10` | Solar X-ray & Lya index scaled to F10.7 | 10⁻²² W / (M² ⋅ Hz) |
+|  | `S81a` | 81-day averaged EUV index (26-34 nm) scaled to F10.7 | 10⁻²² W / (M² ⋅ Hz) |
+|  | `M81a` | 81-day averaged MG2 index scaled to F10.7 | 10⁻²² W / (M² ⋅ Hz) |
+|  | `Y81a` | 81-day averaged solar X-ray & Lya index scaled to F10.7 | 10⁻²² W / (M² ⋅ Hz) |
+| `Hpo` | `Hp30` | Geomagnetic index with 30-minute resolution |  |
+|  | `ap30` | Linear geomagnetic activity index (30-minute) |  |
+|  | `Hp60` | Geomagnetic index with 60-minute resolution |  |
+|  | `ap60` | Linear geomagnetic activity index (60-minute) |  |
+| `Dst` | `Dst` | Disturbance Storm Time index (hourly) | nT |
+| `SatelliteToolboxSpaceIndexSets` | `F10predicted` | Predicted F10.7 (10.7-cm solar flux) from a harmonic model | 10⁻²² W / (M² ⋅ Hz) |
 
 !!! note
     The `Dst` index set is not included in the default `SpaceIndices.init()` call. It must
-    be initialized separately after an ap data source (`Celestrak` or `Hpo`) is available.
-    See [Initialization of Space Indices](@ref) for details.
+    be initialized separately using `SpaceIndices.init(SpaceIndices.Dst)`. See
+    [Initialization of Space Indices](@ref) for details.
+
+!!! note
+    The `F10predicted` index is a long-term prediction obtained from a harmonic model with
+    six harmonics fitted to the observed F10.7 data since 1957-10-02. It only captures the
+    mean solar cycle behavior and must not be used as a short-term forecast of the solar
+    activity.
